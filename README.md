@@ -12,7 +12,7 @@ uv sync
 ## Usage
 
 ```sh
-uv run --env-file .env sasoi "hello"
+uv run sasoi "hello"
 ```
 
 Set `SASOI_MODEL` in `.env` to override the default model (`claude-haiku-5-5`).
