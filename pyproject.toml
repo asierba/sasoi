@@ -1,0 +1,17 @@
+[project]
+name = "sasoi"
+version = "0.1.0"
+description = "Personal agent that analyses running and strength training"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = ["httpx>=0.27"]
+
+[project.scripts]
+sasoi = "sasoi.cli:main"
+
+[dependency-groups]
+dev = ["pytest>=8"]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
