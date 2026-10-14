@@ -27,7 +27,7 @@ class ClaudeClient:
         self._model = model
         self._http = http
 
-    def send(self, prompt: str) -> str:
+    def send(self, messages: list[dict]) -> str:
         response = self._http.post(
             MESSAGES_URL,
             headers={
@@ -38,7 +38,7 @@ class ClaudeClient:
             json={
                 "model": self._model,
                 "max_tokens": MAX_TOKENS,
-                "messages": [{"role": "user", "content": prompt}],
+                "messages": messages,
             },
         )
         if response.is_error:

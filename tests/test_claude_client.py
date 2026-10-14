@@ -12,7 +12,7 @@ def test_send_returns_single_text_block_as_is():
 
     http = httpx.Client(transport=httpx.MockTransport(handler))
 
-    reply = ClaudeClient("test-key", "test-model", http).send("hi")
+    reply = ClaudeClient("test-key", "test-model", http).send([{"role": "user", "content": "hi"}])
 
     assert reply == "Hello there"
 
@@ -29,7 +29,7 @@ def test_send_posts_prompt_and_returns_text():
 
     http = httpx.Client(transport=httpx.MockTransport(handler))
 
-    reply = ClaudeClient("test-key", "test-model", http).send("hi")
+    reply = ClaudeClient("test-key", "test-model", http).send([{"role": "user", "content": "hi"}])
 
     request = captured["request"]
     assert str(request.url) == "https://api.anthropic.com/v1/messages"
@@ -56,7 +56,7 @@ def test_send_raises_api_error_with_type_and_message():
     http = httpx.Client(transport=httpx.MockTransport(handler))
 
     with pytest.raises(ClaudeApiError) as raised:
-        ClaudeClient("bad-key", "test-model", http).send("hi")
+        ClaudeClient("bad-key", "test-model", http).send([{"role": "user", "content": "hi"}])
 
     assert raised.value.status_code == 401
     assert raised.value.error_type == "authentication_error"
@@ -71,7 +71,7 @@ def test_send_raises_api_error_with_raw_body_when_not_json():
     http = httpx.Client(transport=httpx.MockTransport(handler))
 
     with pytest.raises(ClaudeApiError) as raised:
-        ClaudeClient("test-key", "test-model", http).send("hi")
+        ClaudeClient("test-key", "test-model", http).send([{"role": "user", "content": "hi"}])
 
     assert raised.value.status_code == 502
     assert raised.value.error_type is None
