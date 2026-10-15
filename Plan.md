@@ -82,7 +82,7 @@ Phase 0 runs on the laptop; by the end of phase 1 the same containers move to an
 
 **Build:**
 
-- [ ] Get a Claude API key from the Claude Console (a Claude subscription does not include API usage)
+- [x] ~~Get a Claude API key from the Claude Console (a Claude subscription does not include API usage)~~
 - [ ] Agent loop (first deliverable, no fitness data yet): a chat CLI that talks to the Claude Messages API over raw HTTP
   - [x] ~~Conversation history~~
   - [x] ~~Two or three toy tools (e.g. current time, calculator) to learn the tool-use loop~~
