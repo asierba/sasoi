@@ -24,3 +24,7 @@ Set `SASOI_MODEL` in `.env` to override the default model (`claude-haiku-5-5`).
 ```sh
 uv run pytest
 ```
+
+## Architecture
+
+See [docs/architecture.excalidraw](docs/architecture.excalidraw) (open with [Excalidraw](https://excalidraw.com)).
