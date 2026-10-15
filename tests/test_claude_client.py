@@ -3,7 +3,7 @@ import json
 import httpx
 import pytest
 
-from sasoi.claude_client import ClaudeApiError, ClaudeClient
+from sasoi.claude_client import ClaudeApiError, ClaudeClient, ClaudeConnectionError
 
 
 def test_send_returns_single_text_block_as_is():
@@ -76,3 +76,15 @@ def test_send_raises_api_error_with_raw_body_when_not_json():
     assert raised.value.status_code == 502
     assert raised.value.error_type is None
     assert raised.value.message == "Bad Gateway"
+
+
+def test_send_raises_connection_error_when_network_fails():
+    def handler(request: httpx.Request) -> httpx.Response:
+        raise httpx.ConnectError("nodename nor servname provided", request=request)
+
+    http = httpx.Client(transport=httpx.MockTransport(handler))
+
+    with pytest.raises(ClaudeConnectionError) as raised:
+        ClaudeClient("test-key", "test-model", http).send([{"role": "user", "content": "hi"}])
+
+    assert str(raised.value) == "connection failed: nodename nor servname provided"

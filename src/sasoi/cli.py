@@ -4,7 +4,7 @@ from collections.abc import Callable
 import httpx
 from dotenv import load_dotenv
 
-from sasoi.claude_client import ClaudeApiError, ClaudeClient
+from sasoi.claude_client import ClaudeClient, ClaudeError
 from sasoi.conversation import Conversation
 
 DEFAULT_MODEL = "claude-haiku-5-5"
@@ -37,7 +37,7 @@ def repl(
         conversation.add_user_message(prompt)
         try:
             reply = client.send(conversation.messages)
-        except ClaudeApiError as error:
+        except ClaudeError as error:
             write(f"{RED}Error: {error}{RESET}")
             continue
         conversation.add_assistant_message(reply)

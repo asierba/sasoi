@@ -5,7 +5,15 @@ API_VERSION = "2023-06-01"
 MAX_TOKENS = 1024
 
 
-class ClaudeApiError(Exception):
+class ClaudeError(Exception):
+    pass
+
+
+class ClaudeConnectionError(ClaudeError):
+    pass
+
+
+class ClaudeApiError(ClaudeError):
     def __init__(self, status_code: int, error_type: str | None, message: str):
         super().__init__(f"{status_code} {error_type or 'unknown_error'}: {message}")
         self.status_code = status_code
@@ -28,19 +36,22 @@ class ClaudeClient:
         self._http = http
 
     def send(self, messages: list[dict]) -> str:
-        response = self._http.post(
-            MESSAGES_URL,
-            headers={
-                "x-api-key": self._api_key,
-                "anthropic-version": API_VERSION,
-                "content-type": "application/json",
-            },
-            json={
-                "model": self._model,
-                "max_tokens": MAX_TOKENS,
-                "messages": messages,
-            },
-        )
+        try:
+            response = self._http.post(
+                MESSAGES_URL,
+                headers={
+                    "x-api-key": self._api_key,
+                    "anthropic-version": API_VERSION,
+                    "content-type": "application/json",
+                },
+                json={
+                    "model": self._model,
+                    "max_tokens": MAX_TOKENS,
+                    "messages": messages,
+                },
+            )
+        except httpx.TransportError as error:
+            raise ClaudeConnectionError(f"connection failed: {error}") from error
         if response.is_error:
             raise ClaudeApiError.from_response(response)
         return "".join(
