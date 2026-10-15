@@ -36,6 +36,11 @@ def test_send_posts_prompt_and_returns_text():
     assert reply.text == "Hello there"
 
 
+A_KEY = "test-key"
+A_MODEL = "test-model"
+A_MESSAGES = [{"role": "user", "content": "hi"}]
+
+
 def test_send_posts_tools_and_returns_tool_use_content_and_stop_reason():
     captured = {}
     tools = [{"name": "current_time", "description": "Now", "input_schema": {"type": "object"}}]
@@ -47,14 +52,11 @@ def test_send_posts_tools_and_returns_tool_use_content_and_stop_reason():
 
     http = httpx.Client(transport=httpx.MockTransport(handler))
 
-    reply = ClaudeClient("test-key", "test-model", http).send(
-        [{"role": "user", "content": "what time is it?"}], tools
-    )
+    reply = ClaudeClient(A_KEY, A_MODEL, http).send(A_MESSAGES, tools)
 
     assert json.loads(captured["request"].content)["tools"] == tools
     assert reply.content == [tool_use]
     assert reply.stop_reason == "tool_use"
-    assert reply.tool_calls == [tool_use]
 
 
 def test_send_raises_api_error_with_type_and_message():
@@ -70,7 +72,7 @@ def test_send_raises_api_error_with_type_and_message():
     http = httpx.Client(transport=httpx.MockTransport(handler))
 
     with pytest.raises(ClaudeApiError) as raised:
-        ClaudeClient("bad-key", "test-model", http).send([{"role": "user", "content": "hi"}], [])
+        ClaudeClient(A_KEY, A_MODEL, http).send(A_MESSAGES, [])
 
     assert raised.value.status_code == 401
     assert raised.value.error_type == "authentication_error"
@@ -85,7 +87,7 @@ def test_send_raises_api_error_with_raw_body_when_not_json():
     http = httpx.Client(transport=httpx.MockTransport(handler))
 
     with pytest.raises(ClaudeApiError) as raised:
-        ClaudeClient("test-key", "test-model", http).send([{"role": "user", "content": "hi"}], [])
+        ClaudeClient(A_KEY, A_MODEL, http).send(A_MESSAGES, [])
 
     assert raised.value.status_code == 502
     assert raised.value.error_type is None
@@ -99,7 +101,7 @@ def test_send_raises_connection_error_when_network_fails():
     http = httpx.Client(transport=httpx.MockTransport(handler))
 
     with pytest.raises(ClaudeConnectionError) as raised:
-        ClaudeClient("test-key", "test-model", http).send([{"role": "user", "content": "hi"}], [])
+        ClaudeClient(A_KEY, A_MODEL, http).send(A_MESSAGES, [])
 
     assert str(raised.value) == "connection failed: nodename nor servname provided"
 

@@ -41,18 +41,27 @@ def test_repl_sends_history_with_each_prompt():
 
     repl(Conversation(), client, Toolbox([]), read=typed("hello", "what did I say?"), write=written.append)
 
-    assert client.calls[1] == [
-        {"role": "user", "content": "hello"},
-        {"role": "assistant", "content": [{"type": "text", "text": "Hi!"}]},
-        {"role": "user", "content": "what did I say?"},
+    assert client.calls == [
+        [
+            {"role": "user", "content": "hello"},
+        ],
+        [
+            {"role": "user", "content": "hello"},
+            {"role": "assistant", "content": [{"type": "text", "text": "Hi!"}]},
+            {"role": "user", "content": "what did I say?"},
+        ],
     ]
     assert written == ["Hi!", "You said hello"]
+
+
+A_DESCRIPTION = "Does something"
+AN_INPUT_SCHEMA = {"type": "object"}
 
 
 def test_repl_runs_requested_tool_and_sends_result_back():
     tool_use = {"type": "tool_use", "id": "toolu_1", "name": "current_time", "input": {}}
     client = FakeClient(Reply([tool_use], "tool_use"), text_reply("It is 09:00"))
-    clock = Tool("current_time", "Now", {"type": "object", "properties": {}}, lambda _: "09:00")
+    clock = Tool("current_time", A_DESCRIPTION, AN_INPUT_SCHEMA, lambda _: "09:00")
     written: list[str] = []
 
     repl(Conversation(), client, Toolbox([clock]), read=typed("what time is it?"), write=written.append)
@@ -86,13 +95,8 @@ def test_repl_keeps_running_tools_until_claude_stops_asking():
         Reply([calculator_call], "tool_use"),
         text_reply("45 minutes until 18:00"),
     )
-    clock = Tool("current_time", "Now", {"type": "object", "properties": {}}, lambda _: "17:15")
-    calculator = Tool(
-        "calculator",
-        "Evaluate an arithmetic expression",
-        {"type": "object", "properties": {"expression": {"type": "string"}}, "required": ["expression"]},
-        lambda _: "45",
-    )
+    clock = Tool("current_time", A_DESCRIPTION, AN_INPUT_SCHEMA, lambda _: "17:15")
+    calculator = Tool("calculator", A_DESCRIPTION, AN_INPUT_SCHEMA, lambda _: "45")
     written: list[str] = []
 
     repl(
