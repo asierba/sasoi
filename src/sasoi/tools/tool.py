@@ -2,6 +2,10 @@ from collections.abc import Callable
 from dataclasses import dataclass
 
 
+class ToolError(Exception):
+    pass
+
+
 @dataclass(frozen=True)
 class Tool:
     name: str

@@ -8,8 +8,11 @@ from dotenv import load_dotenv
 
 from sasoi.claude_client import ClaudeClient, ClaudeError, Reply
 from sasoi.conversation import Conversation
+from sasoi.open_meteo_client import OpenMeteoClient
 from sasoi.tools.current_time import current_time
+from sasoi.tools.geocode import geocode
 from sasoi.tools.toolbox import Toolbox
+from sasoi.tools.weather_history import weather_history
 
 DEFAULT_MODEL = "claude-haiku-5-5"
 RED = "\033[31m"
@@ -39,7 +42,8 @@ def main() -> None:
     config = load_config(os.environ)
     with httpx.Client(timeout=60, trust_env=False) as http:
         client = ClaudeClient(config.api_key, config.model, http)
-        repl(Conversation(), client, Toolbox([current_time]))
+        open_meteo = OpenMeteoClient(http)
+        repl(Conversation(), client, Toolbox([current_time, geocode(open_meteo), weather_history(open_meteo)]))
 
 
 def repl(

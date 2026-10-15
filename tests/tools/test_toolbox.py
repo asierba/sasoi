@@ -1,4 +1,4 @@
-from sasoi.tools.tool import Tool
+from sasoi.tools.tool import Tool, ToolError
 from sasoi.tools.toolbox import Toolbox
 
 
@@ -26,4 +26,19 @@ def test_run_calls_requested_tool_with_its_input_and_returns_tool_result():
         "type": "tool_result",
         "tool_use_id": "toolu_1",
         "content": "result of 1 + 1",
+    }
+
+
+def test_run_returns_error_result_when_tool_fails():
+    def fail(_: dict) -> str:
+        raise ToolError("No place found for 'xqzzqx'")
+
+    geocode = Tool("geocode", A_DESCRIPTION, AN_INPUT_SCHEMA, fail)
+    call = {"id": "toolu_1", "name": "geocode", "input": {"place": "xqzzqx"}}
+
+    assert Toolbox([geocode]).run(call) == {
+        "type": "tool_result",
+        "tool_use_id": "toolu_1",
+        "content": "No place found for 'xqzzqx'",
+        "is_error": True,
     }

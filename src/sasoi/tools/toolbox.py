@@ -1,4 +1,4 @@
-from sasoi.tools.tool import Tool
+from sasoi.tools.tool import Tool, ToolError
 
 
 class Toolbox:
@@ -11,4 +11,7 @@ class Toolbox:
 
     def run(self, call: dict) -> dict:
         tool = self._tools_by_name[call["name"]]
-        return {"type": "tool_result", "tool_use_id": call["id"], "content": tool.run(call["input"])}
+        try:
+            return {"type": "tool_result", "tool_use_id": call["id"], "content": tool.run(call["input"])}
+        except ToolError as error:
+            return {"type": "tool_result", "tool_use_id": call["id"], "content": str(error), "is_error": True}
