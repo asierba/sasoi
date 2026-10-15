@@ -11,6 +11,7 @@ from sasoi.conversation import Conversation
 
 DEFAULT_MODEL = "claude-haiku-5-5"
 RED = "\033[31m"
+YELLOW = "\033[33m"
 RESET = "\033[0m"
 
 
@@ -57,6 +58,9 @@ def repl(
             reply = client.send(conversation.messages)
         except ClaudeError as error:
             write(f"{RED}Error: {error}{RESET}")
+            continue
+        except KeyboardInterrupt:
+            write(f"{YELLOW}Interrupted{RESET}")
             continue
         conversation.add_assistant_message(reply)
         write(reply)

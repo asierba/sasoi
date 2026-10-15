@@ -1,19 +1,19 @@
 import pytest
 
 from sasoi.claude_client import ClaudeApiError
-from sasoi.cli import DEFAULT_MODEL, RED, RESET, Config, load_config, repl
+from sasoi.cli import DEFAULT_MODEL, RED, RESET, YELLOW, Config, load_config, repl
 from sasoi.conversation import Conversation
 
 
 class FakeClient:
-    def __init__(self, *replies: str | Exception):
+    def __init__(self, *replies: str | BaseException):
         self._replies = list(replies)
         self.calls: list[list[dict]] = []
 
     def send(self, messages: list[dict]) -> str:
         self.calls.append(messages)
         reply = self._replies.pop(0)
-        if isinstance(reply, Exception):
+        if isinstance(reply, BaseException):
             raise reply
         return reply
 
@@ -52,12 +52,21 @@ def test_repl_skips_empty_prompts():
 
 
 def test_repl_shows_api_error_in_red_and_keeps_going():
-    client = FakeClient(ClaudeApiError(529, "overloaded_error", "Overloaded"), "Hi!")
+    client = FakeClient(ClaudeApiError(529, "overloaded_error", "Overloaded"), "second reply")
     written: list[str] = []
 
-    repl(Conversation(), client, read=typed("hello", "again"), write=written.append)
+    repl(Conversation(), client, read=typed("first", "second"), write=written.append)
 
-    assert written == [f"{RED}Error: 529 overloaded_error: Overloaded{RESET}", "Hi!"]
+    assert written == [f"{RED}Error: 529 overloaded_error: Overloaded{RESET}", "second reply"]
+
+
+def test_repl_shows_interrupted_in_yellow_on_ctrl_c_and_keeps_going():
+    client = FakeClient(KeyboardInterrupt(), "second reply")
+    written: list[str] = []
+
+    repl(Conversation(), client, read=typed("first", "second"), write=written.append)
+
+    assert written == [f"{YELLOW}Interrupted{RESET}", "second reply"]
 
 
 def test_load_config_exits_with_message_when_api_key_missing():
