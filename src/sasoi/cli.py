@@ -1,5 +1,6 @@
 import os
-from collections.abc import Callable
+from collections.abc import Callable, Mapping
+from dataclasses import dataclass
 from typing import Protocol
 
 import httpx
@@ -17,12 +18,24 @@ class ChatClient(Protocol):
     def send(self, messages: list[dict]) -> str: ...
 
 
+@dataclass(frozen=True)
+class Config:
+    api_key: str
+    model: str
+
+
+def load_config(env: Mapping[str, str]) -> Config:
+    api_key = env.get("ANTHROPIC_API_KEY")
+    if not api_key:
+        raise SystemExit(f"{RED}Error: ANTHROPIC_API_KEY is not set{RESET}")
+    return Config(api_key, env.get("SASOI_MODEL", DEFAULT_MODEL))
+
+
 def main() -> None:
     load_dotenv(".env")
-    api_key = os.environ["ANTHROPIC_API_KEY"]
-    model = os.environ.get("SASOI_MODEL", DEFAULT_MODEL)
+    config = load_config(os.environ)
     with httpx.Client(timeout=60, trust_env=False) as http:
-        repl(Conversation(), ClaudeClient(api_key, model, http))
+        repl(Conversation(), ClaudeClient(config.api_key, config.model, http))
 
 
 def repl(

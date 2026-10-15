@@ -1,5 +1,7 @@
+import pytest
+
 from sasoi.claude_client import ClaudeApiError
-from sasoi.cli import RED, RESET, repl
+from sasoi.cli import DEFAULT_MODEL, RED, RESET, Config, load_config, repl
 from sasoi.conversation import Conversation
 
 
@@ -56,3 +58,14 @@ def test_repl_shows_api_error_in_red_and_keeps_going():
     repl(Conversation(), client, read=typed("hello", "again"), write=written.append)
 
     assert written == [f"{RED}Error: 529 overloaded_error: Overloaded{RESET}", "Hi!"]
+
+
+def test_load_config_exits_with_message_when_api_key_missing():
+    with pytest.raises(SystemExit) as raised:
+        load_config({})
+
+    assert raised.value.code == f"{RED}Error: ANTHROPIC_API_KEY is not set{RESET}"
+
+
+def test_load_config_uses_default_model_when_not_set():
+    assert load_config({"ANTHROPIC_API_KEY": "key"}) == Config("key", DEFAULT_MODEL)
