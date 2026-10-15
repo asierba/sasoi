@@ -1,15 +1,19 @@
+from sasoi.claude_client import ClaudeApiError
 from sasoi.cli import repl
 from sasoi.conversation import Conversation
 
 
 class FakeClient:
-    def __init__(self, *replies: str):
+    def __init__(self, *replies: str | Exception):
         self._replies = list(replies)
         self.calls: list[list[dict]] = []
 
     def send(self, messages: list[dict]) -> str:
         self.calls.append(messages)
-        return self._replies.pop(0)
+        reply = self._replies.pop(0)
+        if isinstance(reply, Exception):
+            raise reply
+        return reply
 
 
 def typed(*lines: str):
@@ -43,3 +47,12 @@ def test_repl_skips_empty_prompts():
     repl(Conversation(), client, read=typed("   ", ""), write=lambda text: None)
 
     assert client.calls == []
+
+
+def test_repl_shows_api_error_and_keeps_going():
+    client = FakeClient(ClaudeApiError(529, "overloaded_error", "Overloaded"), "Hi!")
+    written: list[str] = []
+
+    repl(Conversation(), client, read=typed("hello", "again"), write=written.append)
+
+    assert written == ["Error: 529 overloaded_error: Overloaded", "Hi!"]
