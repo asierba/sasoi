@@ -83,7 +83,7 @@ Phase 0 runs on the laptop; by the end of phase 1 the same containers move to an
 **Build:**
 
 - [ ] Get a Claude API key from the Claude Console (a Claude subscription does not include API usage)
-- [ ] Agent loop (first deliverable, no fitness data yet): a chat CLI that talks to the Claude Messages API over raw HTTP, with conversation history, streaming, two or three toy tools (e.g. current time, calculator) to learn the tool-use loop, stop-reason handling, retries with backoff, tokens and cost per turn, and a trace of every call
+- [ ] Agent loop (first deliverable, no fitness data yet): a chat CLI that talks to the Claude Messages API over raw HTTP, built in this order: conversation history, two or three toy tools (e.g. current time, calculator) to learn the tool-use loop, stop-reason handling, retries with backoff, tokens and cost per turn, and a trace of every call
 - [ ] Data access spike (go/no-go): create an Intervals.icu account, connect Garmin Connect, confirm a recent run arrives with laps and heart rate, and fetch it with curl using the personal API key; export Hevy workouts to CSV and check it has sets, reps, weight and dates; check whether Hevy workouts also reach Garmin Connect. If a route fails, step down the ladder: API, then export files, then screenshots read by a vision model.
 - [ ] Ingestion: pull Intervals.icu activities and the Hevy CSV export into Postgres; inspect the data (exercise naming, units, time zones) before designing the schema
 - [ ] Data tools: add a read-only `run_sql` tool and the schema description to the loop; Dockerfile and compose file
@@ -115,6 +115,7 @@ Phase 0 runs on the laptop; by the end of phase 1 the same containers move to an
 
 **Build:**
 
+- Streaming in the agent loop, used by both the CLI and the web chat
 - Minimal web app on the always-on host: one chat page with streaming and a list of past conversations
 - A "Discuss this run" link in each feedback email that opens a new conversation loaded with that session's context pack
 - Conversations stored in the same Postgres database
