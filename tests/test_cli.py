@@ -1,5 +1,5 @@
 from sasoi.claude_client import ClaudeApiError
-from sasoi.cli import repl
+from sasoi.cli import RED, RESET, repl
 from sasoi.conversation import Conversation
 
 
@@ -49,10 +49,10 @@ def test_repl_skips_empty_prompts():
     assert client.calls == []
 
 
-def test_repl_shows_api_error_and_keeps_going():
+def test_repl_shows_api_error_in_red_and_keeps_going():
     client = FakeClient(ClaudeApiError(529, "overloaded_error", "Overloaded"), "Hi!")
     written: list[str] = []
 
     repl(Conversation(), client, read=typed("hello", "again"), write=written.append)
 
-    assert written == ["Error: 529 overloaded_error: Overloaded", "Hi!"]
+    assert written == [f"{RED}Error: 529 overloaded_error: Overloaded{RESET}", "Hi!"]

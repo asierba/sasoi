@@ -8,6 +8,8 @@ from sasoi.claude_client import ClaudeApiError, ClaudeClient
 from sasoi.conversation import Conversation
 
 DEFAULT_MODEL = "claude-haiku-5-5"
+RED = "\033[31m"
+RESET = "\033[0m"
 
 
 def main() -> None:
@@ -36,7 +38,7 @@ def repl(
         try:
             reply = client.send(conversation.messages)
         except ClaudeApiError as error:
-            write(f"Error: {error}")
+            write(f"{RED}Error: {error}{RESET}")
             continue
         conversation.add_assistant_message(reply)
         write(reply)
