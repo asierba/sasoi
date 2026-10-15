@@ -1,3 +1,5 @@
+from dataclasses import dataclass
+
 import httpx
 
 MESSAGES_URL = "https://api.anthropic.com/v1/messages"
@@ -29,13 +31,27 @@ class ClaudeApiError(ClaudeError):
             return cls(response.status_code, None, response.text)
 
 
+@dataclass(frozen=True)
+class Reply:
+    content: list[dict]
+    stop_reason: str
+
+    @property
+    def text(self) -> str:
+        return "".join(block["text"] for block in self.content if block["type"] == "text")
+
+    @property
+    def tool_calls(self) -> list[dict]:
+        return [block for block in self.content if block["type"] == "tool_use"]
+
+
 class ClaudeClient:
     def __init__(self, api_key: str, model: str, http: httpx.Client):
         self._api_key = api_key
         self._model = model
         self._http = http
 
-    def send(self, messages: list[dict]) -> str:
+    def send(self, messages: list[dict], tools: list[dict]) -> Reply:
         try:
             response = self._http.post(
                 MESSAGES_URL,
@@ -48,12 +64,12 @@ class ClaudeClient:
                     "model": self._model,
                     "max_tokens": MAX_TOKENS,
                     "messages": messages,
+                    "tools": tools,
                 },
             )
         except httpx.TransportError as error:
             raise ClaudeConnectionError(f"connection failed: {error}") from error
         if response.is_error:
             raise ClaudeApiError.from_response(response)
-        return "".join(
-            block["text"] for block in response.json()["content"] if block["type"] == "text"
-        )
+        body = response.json()
+        return Reply(body["content"], body["stop_reason"])

@@ -3,18 +3,7 @@ import json
 import httpx
 import pytest
 
-from sasoi.claude_client import ClaudeApiError, ClaudeClient, ClaudeConnectionError
-
-
-def test_send_returns_single_text_block_as_is():
-    def handler(request: httpx.Request) -> httpx.Response:
-        return httpx.Response(200, json={"content": [{"type": "text", "text": "Hello there"}]})
-
-    http = httpx.Client(transport=httpx.MockTransport(handler))
-
-    reply = ClaudeClient("test-key", "test-model", http).send([{"role": "user", "content": "hi"}])
-
-    assert reply == "Hello there"
+from sasoi.claude_client import ClaudeApiError, ClaudeClient, ClaudeConnectionError, Reply
 
 
 def test_send_posts_prompt_and_returns_text():
@@ -24,12 +13,15 @@ def test_send_posts_prompt_and_returns_text():
         captured["request"] = request
         return httpx.Response(
             200,
-            json={"content": [{"type": "text", "text": "Hello "}, {"type": "text", "text": "there"}]},
+            json={
+                "content": [{"type": "text", "text": "Hello there"}],
+                "stop_reason": "end_turn",
+            },
         )
 
     http = httpx.Client(transport=httpx.MockTransport(handler))
 
-    reply = ClaudeClient("test-key", "test-model", http).send([{"role": "user", "content": "hi"}])
+    reply = ClaudeClient("test-key", "test-model", http).send([{"role": "user", "content": "hi"}], [])
 
     request = captured["request"]
     assert str(request.url) == "https://api.anthropic.com/v1/messages"
@@ -39,8 +31,30 @@ def test_send_posts_prompt_and_returns_text():
         "model": "test-model",
         "max_tokens": 1024,
         "messages": [{"role": "user", "content": "hi"}],
+        "tools": [],
     }
-    assert reply == "Hello there"
+    assert reply.text == "Hello there"
+
+
+def test_send_posts_tools_and_returns_tool_use_content_and_stop_reason():
+    captured = {}
+    tools = [{"name": "current_time", "description": "Now", "input_schema": {"type": "object"}}]
+    tool_use = {"type": "tool_use", "id": "toolu_1", "name": "current_time", "input": {}}
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        captured["request"] = request
+        return httpx.Response(200, json={"content": [tool_use], "stop_reason": "tool_use"})
+
+    http = httpx.Client(transport=httpx.MockTransport(handler))
+
+    reply = ClaudeClient("test-key", "test-model", http).send(
+        [{"role": "user", "content": "what time is it?"}], tools
+    )
+
+    assert json.loads(captured["request"].content)["tools"] == tools
+    assert reply.content == [tool_use]
+    assert reply.stop_reason == "tool_use"
+    assert reply.tool_calls == [tool_use]
 
 
 def test_send_raises_api_error_with_type_and_message():
@@ -56,7 +70,7 @@ def test_send_raises_api_error_with_type_and_message():
     http = httpx.Client(transport=httpx.MockTransport(handler))
 
     with pytest.raises(ClaudeApiError) as raised:
-        ClaudeClient("bad-key", "test-model", http).send([{"role": "user", "content": "hi"}])
+        ClaudeClient("bad-key", "test-model", http).send([{"role": "user", "content": "hi"}], [])
 
     assert raised.value.status_code == 401
     assert raised.value.error_type == "authentication_error"
@@ -71,7 +85,7 @@ def test_send_raises_api_error_with_raw_body_when_not_json():
     http = httpx.Client(transport=httpx.MockTransport(handler))
 
     with pytest.raises(ClaudeApiError) as raised:
-        ClaudeClient("test-key", "test-model", http).send([{"role": "user", "content": "hi"}])
+        ClaudeClient("test-key", "test-model", http).send([{"role": "user", "content": "hi"}], [])
 
     assert raised.value.status_code == 502
     assert raised.value.error_type is None
@@ -85,6 +99,41 @@ def test_send_raises_connection_error_when_network_fails():
     http = httpx.Client(transport=httpx.MockTransport(handler))
 
     with pytest.raises(ClaudeConnectionError) as raised:
-        ClaudeClient("test-key", "test-model", http).send([{"role": "user", "content": "hi"}])
+        ClaudeClient("test-key", "test-model", http).send([{"role": "user", "content": "hi"}], [])
 
     assert str(raised.value) == "connection failed: nodename nor servname provided"
+
+
+A_STOP_REASON = "end_turn"
+
+
+def test_reply_returns_text():
+    reply = Reply([{"type": "text", "text": "Hello"}], A_STOP_REASON)
+
+    assert reply.text == "Hello"
+
+
+def test_reply_joins_text_blocks():
+    reply = Reply([{"type": "text", "text": "Hello "}, {"type": "text", "text": "there"}], A_STOP_REASON)
+
+    assert reply.text == "Hello there"
+
+
+def test_reply_returns_tool_calls():
+    tool_use = {"type": "tool_use", "id": "toolu_1", "name": "current_time", "input": {}}
+    reply = Reply([tool_use], A_STOP_REASON)
+
+    assert reply.tool_calls == [tool_use]
+
+
+def test_reply_text_ignores_non_text_blocks():
+    reply = Reply([{"type": "text", "text": "Let me check"}, {"type": "tool_use"}], A_STOP_REASON)
+
+    assert reply.text == "Let me check"
+
+
+def test_reply_tool_calls_ignores_text_blocks():
+    tool_use = {"type": "tool_use", "id": "toolu_1", "name": "current_time", "input": {}}
+    reply = Reply([{"type": "text"}, tool_use], A_STOP_REASON)
+
+    assert reply.tool_calls == [tool_use]

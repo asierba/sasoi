@@ -6,8 +6,10 @@ from typing import Protocol
 import httpx
 from dotenv import load_dotenv
 
-from sasoi.claude_client import ClaudeClient, ClaudeError
+from sasoi.claude_client import ClaudeClient, ClaudeError, Reply
 from sasoi.conversation import Conversation
+from sasoi.tools.current_time import current_time
+from sasoi.tools.toolbox import Toolbox
 
 DEFAULT_MODEL = "claude-haiku-5-5"
 RED = "\033[31m"
@@ -16,7 +18,7 @@ RESET = "\033[0m"
 
 
 class ChatClient(Protocol):
-    def send(self, messages: list[dict]) -> str: ...
+    def send(self, messages: list[dict], tools: list[dict]) -> Reply: ...
 
 
 @dataclass(frozen=True)
@@ -36,12 +38,14 @@ def main() -> None:
     load_dotenv(".env")
     config = load_config(os.environ)
     with httpx.Client(timeout=60, trust_env=False) as http:
-        repl(Conversation(), ClaudeClient(config.api_key, config.model, http))
+        client = ClaudeClient(config.api_key, config.model, http)
+        repl(Conversation(), client, Toolbox([current_time]))
 
 
 def repl(
     conversation: Conversation,
     client: ChatClient,
+    toolbox: Toolbox,
     read: Callable[[str], str] = input,
     write: Callable[[str], None] = print,
 ) -> None:
@@ -55,12 +59,16 @@ def repl(
             continue
         conversation.add_user_message(prompt)
         try:
-            reply = client.send(conversation.messages)
+            reply = client.send(conversation.messages, toolbox.definitions)
+            while reply.stop_reason == "tool_use":
+                conversation.add_assistant_message(reply.content)
+                conversation.add_tool_results([toolbox.run(call) for call in reply.tool_calls])
+                reply = client.send(conversation.messages, toolbox.definitions)
         except ClaudeError as error:
             write(f"{RED}Error: {error}{RESET}")
             continue
         except KeyboardInterrupt:
             write(f"{YELLOW}Interrupted{RESET}")
             continue
-        conversation.add_assistant_message(reply)
-        write(reply)
+        conversation.add_assistant_message(reply.content)
+        write(reply.text)
