@@ -1,5 +1,6 @@
 import os
 from collections.abc import Callable
+from typing import Protocol
 
 import httpx
 from dotenv import load_dotenv
@@ -12,6 +13,10 @@ RED = "\033[31m"
 RESET = "\033[0m"
 
 
+class ChatClient(Protocol):
+    def send(self, messages: list[dict]) -> str: ...
+
+
 def main() -> None:
     load_dotenv(".env")
     api_key = os.environ["ANTHROPIC_API_KEY"]
@@ -22,7 +27,7 @@ def main() -> None:
 
 def repl(
     conversation: Conversation,
-    client: ClaudeClient,
+    client: ChatClient,
     read: Callable[[str], str] = input,
     write: Callable[[str], None] = print,
 ) -> None:
