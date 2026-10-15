@@ -1,27 +1,20 @@
 import pytest
 
-from sasoi.claude_client import ClaudeApiError, Reply
+from sasoi.claude_client import ClaudeApiError
 from sasoi.cli import DEFAULT_MODEL, RED, RESET, YELLOW, Config, load_config, repl
-from sasoi.conversation import Conversation
-from sasoi.tools.tool import Tool
-from sasoi.tools.toolbox import Toolbox
 
 
-def text_reply(text: str) -> Reply:
-    return Reply([{"type": "text", "text": text}], "end_turn")
+class FakeAgent:
+    def __init__(self, *answers: str | BaseException):
+        self._answers = list(answers)
+        self.prompts: list[str] = []
 
-
-class FakeClient:
-    def __init__(self, *replies: Reply | BaseException):
-        self._replies = list(replies)
-        self.calls: list[list[dict]] = []
-
-    def send(self, messages: list[dict], tools: list[dict]) -> Reply:
-        self.calls.append(messages)
-        reply = self._replies.pop(0)
-        if isinstance(reply, BaseException):
-            raise reply
-        return reply
+    def ask(self, prompt: str) -> str:
+        self.prompts.append(prompt)
+        answer = self._answers.pop(0)
+        if isinstance(answer, BaseException):
+            raise answer
+        return answer
 
 
 def typed(*lines: str):
@@ -35,123 +28,38 @@ def typed(*lines: str):
     return read
 
 
-def test_repl_sends_history_with_each_prompt():
-    client = FakeClient(text_reply("Hi!"), text_reply("You said hello"))
+def test_repl_writes_each_answer():
+    agent = FakeAgent("Hi!", "You said hello")
     written: list[str] = []
 
-    repl(Conversation(), client, Toolbox([]), read=typed("hello", "what did I say?"), write=written.append)
+    repl(agent, read=typed("hello", "what did I say?"), write=written.append)
 
-    assert client.calls == [
-        [
-            {"role": "user", "content": "hello"},
-        ],
-        [
-            {"role": "user", "content": "hello"},
-            {"role": "assistant", "content": [{"type": "text", "text": "Hi!"}]},
-            {"role": "user", "content": "what did I say?"},
-        ],
-    ]
+    assert agent.prompts == ["hello", "what did I say?"]
     assert written == ["Hi!", "You said hello"]
 
 
-A_DESCRIPTION = "Does something"
-AN_INPUT_SCHEMA = {"type": "object"}
-
-
-def test_repl_runs_requested_tool_and_sends_result_back():
-    tool_use = {"type": "tool_use", "id": "toolu_1", "name": "current_time", "input": {}}
-    client = FakeClient(Reply([tool_use], "tool_use"), text_reply("It is 09:00"))
-    clock = Tool("current_time", A_DESCRIPTION, AN_INPUT_SCHEMA, lambda _: "09:00")
-    written: list[str] = []
-
-    repl(Conversation(), client, Toolbox([clock]), read=typed("what time is it?"), write=written.append)
-
-    assert client.calls == [
-        [
-            {"role": "user", "content": "what time is it?"},
-        ],
-        [
-            {"role": "user", "content": "what time is it?"},
-            {"role": "assistant", "content": [tool_use]},
-            {
-                "role": "user",
-                "content": [{"type": "tool_result", "tool_use_id": "toolu_1", "content": "09:00"}],
-            },
-        ],
-    ]
-    assert written == ["It is 09:00"]
-
-
-def test_repl_keeps_running_tools_until_claude_stops_asking():
-    time_call = {"type": "tool_use", "id": "toolu_1", "name": "current_time", "input": {}}
-    calculator_call = {
-        "type": "tool_use",
-        "id": "toolu_2",
-        "name": "calculator",
-        "input": {"expression": "18 * 60 - (17 * 60 + 15)"},
-    }
-    client = FakeClient(
-        Reply([time_call], "tool_use"),
-        Reply([calculator_call], "tool_use"),
-        text_reply("45 minutes until 18:00"),
-    )
-    clock = Tool("current_time", A_DESCRIPTION, AN_INPUT_SCHEMA, lambda _: "17:15")
-    calculator = Tool("calculator", A_DESCRIPTION, AN_INPUT_SCHEMA, lambda _: "45")
-    written: list[str] = []
-
-    repl(
-        Conversation(),
-        client,
-        Toolbox([clock, calculator]),
-        read=typed("how many minutes until 18:00?"),
-        write=written.append,
-    )
-
-    question = {"role": "user", "content": "how many minutes until 18:00?"}
-    time_result = {
-        "role": "user",
-        "content": [{"type": "tool_result", "tool_use_id": "toolu_1", "content": "17:15"}],
-    }
-    calculator_result = {
-        "role": "user",
-        "content": [{"type": "tool_result", "tool_use_id": "toolu_2", "content": "45"}],
-    }
-    assert client.calls == [
-        [question],
-        [question, {"role": "assistant", "content": [time_call]}, time_result],
-        [
-            question,
-            {"role": "assistant", "content": [time_call]},
-            time_result,
-            {"role": "assistant", "content": [calculator_call]},
-            calculator_result,
-        ],
-    ]
-    assert written == ["45 minutes until 18:00"]
-
-
 def test_repl_skips_empty_prompts():
-    client = FakeClient()
+    agent = FakeAgent()
 
-    repl(Conversation(), client, Toolbox([]), read=typed("   ", ""), write=lambda text: None)
+    repl(agent, read=typed("   ", ""), write=lambda text: None)
 
-    assert client.calls == []
+    assert agent.prompts == []
 
 
 def test_repl_shows_api_error_in_red_and_keeps_going():
-    client = FakeClient(ClaudeApiError(529, "overloaded_error", "Overloaded"), text_reply("second reply"))
+    agent = FakeAgent(ClaudeApiError(529, "overloaded_error", "Overloaded"), "second reply")
     written: list[str] = []
 
-    repl(Conversation(), client, Toolbox([]), read=typed("first", "second"), write=written.append)
+    repl(agent, read=typed("first", "second"), write=written.append)
 
     assert written == [f"{RED}Error: 529 overloaded_error: Overloaded{RESET}", "second reply"]
 
 
 def test_repl_shows_interrupted_in_yellow_on_ctrl_c_and_keeps_going():
-    client = FakeClient(KeyboardInterrupt(), text_reply("second reply"))
+    agent = FakeAgent(KeyboardInterrupt(), "second reply")
     written: list[str] = []
 
-    repl(Conversation(), client, Toolbox([]), read=typed("first", "second"), write=written.append)
+    repl(agent, read=typed("first", "second"), write=written.append)
 
     assert written == [f"{YELLOW}Interrupted{RESET}", "second reply"]
 

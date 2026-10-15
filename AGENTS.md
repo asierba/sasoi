@@ -15,14 +15,15 @@ Env: `.env` loaded by `cli.main`; `SASOI_MODEL` overrides the default model.
 
 ## Architecture
 
-- `cli.py`: `main` wires env, `httpx.Client`, `Conversation`, `ClaudeClient` into `repl`. `repl` takes injectable `read`/`write` for tests.
+- `cli.py`: `main` wires env, `httpx.Client` and an `Agent` into `repl`. `repl` only does terminal I/O; takes injectable `read`/`write` for tests.
+- `agent.py`: `Agent.ask` runs one turn: history, Claude call, tool-use loop.
 - `claude_client.py`: raw-HTTP call to the Messages API (no Anthropic SDK, by design). Errors raised as `ClaudeApiError`.
 - `conversation.py`: in-memory message history; `messages` returns a copy.
 
 ## Testing conventions
 
 - HTTP mocked with `httpx.MockTransport`, never real network.
-- CLI tested via fake client and injected `read`/`write` (no monkeypatching `input`).
+- CLI tested via fake agent and injected `read`/`write` (no monkeypatching `input`).
 
 ## Docs
 
