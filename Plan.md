@@ -253,8 +253,8 @@ Going deeper, such as training models from scratch, is a separate decision for l
 | Garmin data access | Risk | End of phase 0 (spike) | Intervals.icu (free) is the main route; fallbacks: FIT export from Garmin Connect, then screenshots read by a vision model |
 | Hevy data access | Risk | End of phase 0 (spike) | Free CSV export first; Pro API only for automation; screenshots as last resort |
 | Intervals.icu terms | Risk | End of phase 0 (spike) | Read the full API terms before relying on it |
-| Tracing tool | Decision | End of phase 1 | Depends on the always-on host: self-hosted on it (e.g. Phoenix, Langfuse) vs SaaS; traces contain health data. JSONL files plus `scripts/trace.sh` until then; OpenTelemetry keeps the backend swappable |
 | Always-on host | Decision | End of phase 1 | Needed for triggers and the web chat; leaning to a cheap VPS (no spare machine at home); compare providers when deciding, as prices moved a lot in 2026. Later, if the project proves its value, move to a Raspberry Pi or similar cheap home machine |
+| Tracing tool | Decision | End of phase 1 | Depends on the always-on host: self-hosted on it (e.g. Phoenix, Langfuse) vs SaaS; traces contain health data. JSONL files plus `scripts/trace.sh` until then; OpenTelemetry keeps the backend swappable |
 | Hevy Pro | Decision | End of phase 3 | One month at $2.99 to automate strength feedback; keep it only if it earns it |
 | Jev spike | Decision | End of phase 7 | Discriminative model vs an LLM; candidate use: classifying run type for plan matching |
 | Local models | Decision | End of phase 9 | Which steps can run on Ollama |
