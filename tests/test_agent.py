@@ -1,7 +1,7 @@
 import pytest
 
 from sasoi.agent import Agent, UnexpectedStopError
-from sasoi.claude_client import Reply
+from sasoi.claude_client import Reply, Usage
 from sasoi.conversation import Conversation
 from sasoi.tools.tool import Tool
 from sasoi.tools.toolbox import Toolbox
@@ -23,6 +23,10 @@ class FakeClient:
 
 A_DESCRIPTION = "Does something"
 AN_INPUT_SCHEMA = {"type": "object"}
+A_PROMPT = "a prompt"
+A_TEXT_CONTENT = [{"type": "text", "text": "a reply"}]
+A_TOOL = Tool("a_tool", A_DESCRIPTION, AN_INPUT_SCHEMA, lambda _: "a result")
+A_TOOL_CALL = {"type": "tool_use", "id": "toolu_1", "name": "a_tool", "input": {}}
 
 
 class TestAgent:
@@ -42,7 +46,7 @@ class TestAgent:
                 {"role": "user", "content": "what did I say?"},
             ],
         ]
-        assert answers == ["Hi!", "You said hello"]
+        assert [answer.text for answer in answers] == ["Hi!", "You said hello"]
 
     def test_runs_requested_tool_and_sends_result_back(self):
         tool_use = {"type": "tool_use", "id": "toolu_1", "name": "current_time", "input": {}}
@@ -64,7 +68,7 @@ class TestAgent:
                 },
             ],
         ]
-        assert answer == "It is 09:00"
+        assert answer.text == "It is 09:00"
 
     def test_keeps_running_tools_until_claude_stops_asking(self):
         time_call = {"type": "tool_use", "id": "toolu_1", "name": "current_time", "input": {}}
@@ -106,24 +110,24 @@ class TestAgent:
                 calculator_result,
             ],
         ]
-        assert answer == "45 minutes until 18:00"
+        assert answer.text == "45 minutes until 18:00"
 
     def test_returns_text_when_stopped_by_stop_sequence(self):
         client = FakeClient(Reply([{"type": "text", "text": "Done"}], "stop_sequence"))
 
-        answer = Agent(Conversation(), client, Toolbox([])).ask("hello")
+        answer = Agent(Conversation(), client, Toolbox([])).ask(A_PROMPT)
 
-        assert answer == "Done"
+        assert answer.text == "Done"
 
     @pytest.mark.parametrize("stop_reason", ["max_tokens", "refusal", "pause_turn"])
     def test_raises_when_reply_stops_unexpectedly(self, stop_reason):
-        client = FakeClient(Reply([{"type": "text", "text": "Partial"}], stop_reason))
+        client = FakeClient(Reply(A_TEXT_CONTENT, stop_reason))
 
         with pytest.raises(UnexpectedStopError, match=f"reply stopped with {stop_reason}"):
-            Agent(Conversation(), client, Toolbox([])).ask("hello")
+            Agent(Conversation(), client, Toolbox([])).ask(A_PROMPT)
 
     def test_keeps_unexpected_reply_out_of_history(self):
-        client = FakeClient(Reply([{"type": "text", "text": "Partial"}], "max_tokens"), text_reply("Hi!"))
+        client = FakeClient(Reply(A_TEXT_CONTENT, "max_tokens"), Reply(A_TEXT_CONTENT, "end_turn"))
         agent = Agent(Conversation(), client, Toolbox([]))
 
         with pytest.raises(UnexpectedStopError):
@@ -134,3 +138,13 @@ class TestAgent:
             {"role": "user", "content": "first"},
             {"role": "user", "content": "second"},
         ]
+
+    def test_adds_up_usage_of_every_call_in_the_turn(self):
+        client = FakeClient(
+            Reply([A_TOOL_CALL], "tool_use", Usage(input_tokens=100, output_tokens=20)),
+            Reply(A_TEXT_CONTENT, "end_turn", Usage(input_tokens=150, output_tokens=10)),
+        )
+
+        answer = Agent(Conversation(), client, Toolbox([A_TOOL])).ask(A_PROMPT)
+
+        assert answer.usage == Usage(input_tokens=250, output_tokens=30)

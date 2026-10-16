@@ -20,6 +20,7 @@ Env: `.env` loaded by `cli.main`; `SASOI_MODEL` overrides the default model.
 - `agent.py`: `Agent.ask` runs one turn: history, Claude call, tool-use loop.
 - `claude_client.py`: raw-HTTP call to the Messages API (no Anthropic SDK, by design). Errors raised as `ClaudeApiError`.
 - `conversation.py`: in-memory message history; `messages` returns a copy.
+- `pricing.py`: per-model `Price` turning a turn's `Usage` into dollars; unknown models show tokens only.
 - `retrying.py`: `RetryingClient` wraps the Claude client, retrying connection errors, 429 and 5xx with backoff.
 - `tracing.py`: `TracedClient` and `TracedToolbox` wrap the Claude client and toolbox, writing every call to `traces/<timestamp>.jsonl` via `Tracer`.
 

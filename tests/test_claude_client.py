@@ -3,12 +3,13 @@ import json
 import httpx
 import pytest
 
-from sasoi.claude_client import ClaudeApiError, ClaudeClient, ClaudeConnectionError, Reply
+from sasoi.claude_client import ClaudeApiError, ClaudeClient, ClaudeConnectionError, Reply, Usage
 
 
 A_KEY = "test-key"
 A_MODEL = "test-model"
 A_MESSAGES = [{"role": "user", "content": "hi"}]
+A_USAGE = {"input_tokens": 1, "output_tokens": 1}
 
 
 class TestClaudeClient:
@@ -22,6 +23,7 @@ class TestClaudeClient:
                 json={
                     "content": [{"type": "text", "text": "Hello there"}],
                     "stop_reason": "end_turn",
+                    "usage": {"input_tokens": 12, "output_tokens": 5},
                 },
             )
 
@@ -40,6 +42,7 @@ class TestClaudeClient:
             "tools": [],
         }
         assert reply.text == "Hello there"
+        assert reply.usage == Usage(input_tokens=12, output_tokens=5)
 
     def test_send_posts_tools_and_returns_tool_use_content_and_stop_reason(self):
         captured = {}
@@ -48,7 +51,7 @@ class TestClaudeClient:
 
         def handler(request: httpx.Request) -> httpx.Response:
             captured["request"] = request
-            return httpx.Response(200, json={"content": [tool_use], "stop_reason": "tool_use"})
+            return httpx.Response(200, json={"content": [tool_use], "stop_reason": "tool_use", "usage": A_USAGE})
 
         http = httpx.Client(transport=httpx.MockTransport(handler))
 

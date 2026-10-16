@@ -9,10 +9,11 @@ from typing import Protocol
 import httpx
 from dotenv import load_dotenv
 
-from sasoi.agent import Agent
+from sasoi.agent import Agent, Answer
 from sasoi.claude_client import MAX_TOKENS, ClaudeClient, ClaudeError
 from sasoi.conversation import Conversation
 from sasoi.open_meteo_client import OpenMeteoClient
+from sasoi.pricing import PRICES, Price
 from sasoi.retrying import RetryingClient
 from sasoi.tools.current_time import current_time
 from sasoi.tools.geocode import geocode
@@ -24,11 +25,12 @@ DEFAULT_MODEL = "claude-haiku-5-5"
 TRACES_DIR = Path("traces")
 RED = "\033[31m"
 YELLOW = "\033[33m"
+DIM = "\033[2m"
 RESET = "\033[0m"
 
 
 class ChatAgent(Protocol):
-    def ask(self, prompt: str) -> str: ...
+    def ask(self, prompt: str) -> Answer: ...
 
 
 @dataclass(frozen=True)
@@ -58,11 +60,18 @@ def main() -> None:
         )
         open_meteo = OpenMeteoClient(http)
         toolbox = TracedToolbox(Toolbox([current_time, geocode(open_meteo), weather_history(open_meteo)]), tracer)
-        repl(Agent(Conversation(), client, toolbox))
+        repl(Agent(Conversation(), client, toolbox), PRICES.get(config.model))
+
+
+def usage_line(answer: Answer, price: Price | None) -> str:
+    tokens = f"{answer.usage.input_tokens:,} in · {answer.usage.output_tokens:,} out"
+    cost = f" · ${price.cost(answer.usage):.4f}" if price else ""
+    return f"{DIM}{tokens}{cost}{RESET}"
 
 
 def repl(
     agent: ChatAgent,
+    price: Price | None = None,
     read: Callable[[str], str] = input,
     write: Callable[[str], None] = print,
 ) -> None:
@@ -82,4 +91,5 @@ def repl(
         except KeyboardInterrupt:
             write(f"{YELLOW}Interrupted{RESET}")
             continue
-        write(answer)
+        write(answer.text)
+        write(usage_line(answer, price))

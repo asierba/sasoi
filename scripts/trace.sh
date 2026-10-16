@@ -32,6 +32,6 @@ tail -n +1 -f "$trace_file" | jq --unbuffered -r --argjson full "$full" '
     if .error then
       "← 🤖 ✗ \(.error)\(if .retry_after then " retry-after=\(.retry_after)s" else "" end) [\(.duration_ms | round)ms]"
     else
-      "← 🤖 \(.stop_reason) [\(.duration_ms | round)ms]: " + (.content | map(block) | join(" | "))
+      "← 🤖 \(.stop_reason) [\(.duration_ms | round)ms\(if .usage then " · \(.usage.input_tokens) in · \(.usage.output_tokens) out" else "" end)]: " + (.content | map(block) | join(" | "))
     end
   end'

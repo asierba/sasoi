@@ -1,15 +1,23 @@
 import pytest
 
-from sasoi.claude_client import ClaudeApiError
-from sasoi.cli import DEFAULT_MODEL, RED, RESET, YELLOW, Config, load_config, repl
+from sasoi.agent import Answer
+from sasoi.claude_client import ClaudeApiError, Usage
+from sasoi.cli import DEFAULT_MODEL, DIM, RED, RESET, YELLOW, Config, load_config, repl
+from sasoi.pricing import Price
+
+A_USAGE = Usage(input_tokens=1, output_tokens=1)
+
+
+def answer(text: str) -> Answer:
+    return Answer(text, A_USAGE)
 
 
 class FakeAgent:
-    def __init__(self, *answers: str | BaseException):
+    def __init__(self, *answers: Answer | BaseException):
         self._answers = list(answers)
         self.prompts: list[str] = []
 
-    def ask(self, prompt: str) -> str:
+    def ask(self, prompt: str) -> Answer:
         self.prompts.append(prompt)
         answer = self._answers.pop(0)
         if isinstance(answer, BaseException):
@@ -30,13 +38,29 @@ def typed(*lines: str):
 
 class TestRepl:
     def test_writes_each_answer(self):
-        agent = FakeAgent("Hi!", "You said hello")
+        agent = FakeAgent(answer("Hi!"), answer("You said hello"))
         written: list[str] = []
 
         repl(agent, read=typed("hello", "what did I say?"), write=written.append)
 
         assert agent.prompts == ["hello", "what did I say?"]
-        assert written == ["Hi!", "You said hello"]
+        assert written[0::2] == ["Hi!", "You said hello"]
+
+    def test_writes_tokens_and_cost_after_each_answer(self):
+        agent = FakeAgent(Answer("Hi!", Usage(input_tokens=1_200, output_tokens=300)))
+        written: list[str] = []
+
+        repl(agent, Price(input_per_mtok=1.00, output_per_mtok=5.00), read=typed("hello"), write=written.append)
+
+        assert written == ["Hi!", f"{DIM}1,200 in · 300 out · $0.0027{RESET}"]
+
+    def test_writes_tokens_only_when_model_has_no_price(self):
+        agent = FakeAgent(Answer("Hi!", Usage(input_tokens=1_200, output_tokens=300)))
+        written: list[str] = []
+
+        repl(agent, None, read=typed("hello"), write=written.append)
+
+        assert written[1] == f"{DIM}1,200 in · 300 out{RESET}"
 
     def test_skips_empty_prompts(self):
         agent = FakeAgent()
@@ -46,20 +70,20 @@ class TestRepl:
         assert agent.prompts == []
 
     def test_shows_api_error_in_red_and_keeps_going(self):
-        agent = FakeAgent(ClaudeApiError(529, "overloaded_error", "Overloaded"), "second reply")
+        agent = FakeAgent(ClaudeApiError(529, "overloaded_error", "Overloaded"), answer("second reply"))
         written: list[str] = []
 
         repl(agent, read=typed("first", "second"), write=written.append)
 
-        assert written == [f"{RED}Error: 529 overloaded_error: Overloaded{RESET}", "second reply"]
+        assert written[:2] == [f"{RED}Error: 529 overloaded_error: Overloaded{RESET}", "second reply"]
 
     def test_shows_interrupted_in_yellow_on_ctrl_c_and_keeps_going(self):
-        agent = FakeAgent(KeyboardInterrupt(), "second reply")
+        agent = FakeAgent(KeyboardInterrupt(), answer("second reply"))
         written: list[str] = []
 
         repl(agent, read=typed("first", "second"), write=written.append)
 
-        assert written == [f"{YELLOW}Interrupted{RESET}", "second reply"]
+        assert written[:2] == [f"{YELLOW}Interrupted{RESET}", "second reply"]
 
 
 class TestLoadConfig:

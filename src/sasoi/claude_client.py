@@ -35,9 +35,19 @@ class ClaudeApiError(ClaudeError):
 
 
 @dataclass(frozen=True)
+class Usage:
+    input_tokens: int = 0
+    output_tokens: int = 0
+
+    def __add__(self, other: "Usage") -> "Usage":
+        return Usage(self.input_tokens + other.input_tokens, self.output_tokens + other.output_tokens)
+
+
+@dataclass(frozen=True)
 class Reply:
     content: list[dict]
     stop_reason: str
+    usage: Usage = Usage()
 
     @property
     def text(self) -> str:
@@ -75,4 +85,5 @@ class ClaudeClient:
         if response.is_error:
             raise ClaudeApiError.from_response(response)
         body = response.json()
-        return Reply(body["content"], body["stop_reason"])
+        usage = Usage(body["usage"]["input_tokens"], body["usage"]["output_tokens"])
+        return Reply(body["content"], body["stop_reason"], usage)

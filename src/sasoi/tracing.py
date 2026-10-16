@@ -1,4 +1,5 @@
 import json
+from dataclasses import asdict
 import time
 from collections.abc import Callable
 from typing import TextIO
@@ -37,7 +38,12 @@ class TracedClient:
         except ClaudeError as error:
             self._record(messages, tools, start, error_outcome(error))
             raise
-        self._record(messages, tools, start, {"content": reply.content, "stop_reason": reply.stop_reason})
+        self._record(
+            messages,
+            tools,
+            start,
+            {"content": reply.content, "stop_reason": reply.stop_reason, "usage": asdict(reply.usage)},
+        )
         return reply
 
     def _record(self, messages: list[dict], tools: list[dict], start: float, outcome: dict) -> None:
