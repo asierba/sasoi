@@ -110,6 +110,7 @@ Phase 0 runs on the laptop; by the end of phase 1 the same containers move to an
 - Feedback workflow: context pack, write, validate the numbers, send
 - Feedback evals: numbers checked by code, usefulness and tone scored by an LLM judge
 - Move to the always-on host, with images built for both amd64 and arm64 so the app runs on an x86 or ARM VPS and later on a Raspberry Pi
+- Tracing tool with a browser UI, replacing the JSONL traces (see open decisions)
 
 **Ships:** feedback in my inbox after every run.
 
@@ -226,7 +227,6 @@ Phase 0 runs on the laptop; by the end of phase 1 the same containers move to an
 - Cost budgets and model routing (Haiku vs Sonnet per step)
 - Local models experiment
 - Online evals and alerts
-- Check whether we want a better way to trace (e.g. a browser UI with OpenTelemetry + Phoenix, or self-hosted Langfuse)
 
 **Ships:** the assistant running unattended, safely and cheaply.
 
@@ -264,7 +264,7 @@ One short build-log post at the end of phases 1, 5, 6, 7 and 8, capped at an aft
 | Hevy data access | Risk | Start of phase 0 (spike) | Free CSV export first; Pro API only for automation; screenshots as last resort |
 | Intervals.icu terms | Risk | Start of phase 0 (spike) | Read the full API terms before relying on it |
 | API key and costs | Open question | Start of phase 0 | Personal key or an organisation account |
-| Tracing tool | Decision | Start of phase 0 | Self-hosted (e.g. Langfuse) vs SaaS; traces contain health data |
+| Tracing tool | Decision | Before phase 1 ends | Depends on the always-on host: self-hosted on it (e.g. Phoenix, Langfuse) vs SaaS; traces contain health data. JSONL files plus `scripts/trace.sh` until then; OpenTelemetry keeps the backend swappable |
 | Delivery channel | Decision | Start of phase 1 | Email first; ntfy push (works without Google services) in phase 9; Telegram bot as a stretch for two-way chat |
 | Always-on host | Decision | Before phase 1 ends | Needed for triggers and the web chat; leaning to a cheap VPS (no spare machine at home); compare providers when deciding, as prices moved a lot in 2026. Later, if the project proves its value, move to a Raspberry Pi or similar cheap home machine |
 | Hevy Pro | Decision | Start of phase 3 | One month at $2.99 to automate strength feedback; keep it only if it earns it |
