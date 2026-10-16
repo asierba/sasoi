@@ -35,13 +35,13 @@ A single-user, self-hosted training assistant. The most valuable feature is auto
 | Garmin (fallback) | FIT export from Garmin Connect, dropped into a watched folder | Free, manual |
 | Hevy (strength) | CSV export from the app (Settings, Export & Import Data) | Free, manual; first route |
 | Hevy (automated) | Official API with a key from Hevy Pro; polled | $2.99/month; only once strength feedback earns it |
-| Strava | Not used | API terms prohibit using API data in AI applications |
+| Strava | Not used | API Policy (2026) §5.3 bans Strava data, even stored or derived, from any AI application, including a model's context window; the allowed Strava MCP needs a subscription; worse data than Garmin and no structured strength sets |
 
 In scope: analysing training and progression, answering questions, charts. Out of scope: medical or injury advice. Eval cases check the agent stays inside this line.
 
 Ingestion is plain, deterministic code with no LLM involved.
 
-Sources: [Strava API changes (TechRepublic)](https://techrepublic.com/article/news-strava-api-scraping-crackdown) · [Garmin developer API pause (the5krunner)](https://the5krunner.com/2026/09/14/garmin-developer-api-access-paused/) · [Hevy API setup (Serval docs)](https://docs.serval.com/sections/integrations/hevy) · [Hevy pricing (Recurdash)](https://recurdash.com/subscription-pricing/hevy) · [Hevy data export (Hevy help)](https://help.hevyapp.com/hc/en-us/articles/38001424401943) · [python-garminconnect (GitHub)](https://github.com/cyberjunky/python-garminconnect)
+Sources: [Strava API Policy (2026)](https://www.strava.com/legal/api_policy) · [Garmin developer API pause (the5krunner)](https://the5krunner.com/2026/09/14/garmin-developer-api-access-paused/) · [Hevy API setup (Serval docs)](https://docs.serval.com/sections/integrations/hevy) · [Hevy pricing (Recurdash)](https://recurdash.com/subscription-pricing/hevy) · [Hevy data export (Hevy help)](https://help.hevyapp.com/hc/en-us/articles/38001424401943) · [Hevy and Garmin integration (Hevy help)](https://help.hevyapp.com/hc/en-us/articles/35361029194647) · [python-garminconnect (GitHub)](https://github.com/cyberjunky/python-garminconnect)
 
 ## Architecture
 
@@ -95,7 +95,7 @@ Phase 0 runs on the laptop; by the end of phase 1 the same containers move to an
 - [ ] Data access spike (go/no-go). If a route fails, step down the ladder: API, then export files, then screenshots read by a vision model.
   - [x] ~~Garmin: fetch a recent run with laps, heart rate and per-second streams through the unofficial Garmin Connect API (`scripts/garmin_spike.py`); later runs reuse the saved token without logging in again~~
   - [ ] Hevy: export workouts to CSV and check it has sets, reps, weight and dates
-  - [ ] Check whether Hevy workouts also reach Garmin Connect
+  - [x] ~~Check whether Hevy workouts also reach Garmin Connect: no native sync, as Garmin refused Hevy API access; third-party sync (hevy2garmin) needs Hevy Pro, which would give direct API access anyway~~
 - [ ] Ingestion: pull Garmin Connect activities and the Hevy CSV export into Postgres; inspect the data (exercise naming, units, time zones) before designing the schema
 - [ ] Data tools: add a read-only `run_sql` tool and the schema description to the loop; Dockerfile and compose file
 - [ ] First evals: 15–20 real questions, each with a hand-written SQL query as ground truth; run the agent and read every trace
