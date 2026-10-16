@@ -1,21 +1,25 @@
 import os
 from collections.abc import Callable, Mapping
 from dataclasses import dataclass
+from datetime import datetime
+from pathlib import Path
 from typing import Protocol
 
 import httpx
 from dotenv import load_dotenv
 
 from sasoi.agent import Agent
-from sasoi.claude_client import ClaudeClient, ClaudeError
+from sasoi.claude_client import MAX_TOKENS, ClaudeClient, ClaudeError
 from sasoi.conversation import Conversation
 from sasoi.open_meteo_client import OpenMeteoClient
 from sasoi.tools.current_time import current_time
 from sasoi.tools.geocode import geocode
 from sasoi.tools.toolbox import Toolbox
 from sasoi.tools.weather_history import weather_history
+from sasoi.tracing import TracedClient, TracedToolbox, Tracer
 
 DEFAULT_MODEL = "claude-haiku-5-5"
+TRACES_DIR = Path("traces")
 RED = "\033[31m"
 YELLOW = "\033[33m"
 RESET = "\033[0m"
@@ -41,10 +45,14 @@ def load_config(env: Mapping[str, str]) -> Config:
 def main() -> None:
     load_dotenv(".env")
     config = load_config(os.environ)
-    with httpx.Client(timeout=60, trust_env=False) as http:
-        client = ClaudeClient(config.api_key, config.model, http)
+    TRACES_DIR.mkdir(exist_ok=True)
+    trace_path = TRACES_DIR / f"{datetime.now():%Y%m%d-%H%M%S}.jsonl"
+    with httpx.Client(timeout=60, trust_env=False) as http, trace_path.open("w") as trace_file:
+        tracer = Tracer(trace_file)
+        tracer.record({"type": "session", "model": config.model, "max_tokens": MAX_TOKENS})
+        client = TracedClient(ClaudeClient(config.api_key, config.model, http), tracer)
         open_meteo = OpenMeteoClient(http)
-        toolbox = Toolbox([current_time, geocode(open_meteo), weather_history(open_meteo)])
+        toolbox = TracedToolbox(Toolbox([current_time, geocode(open_meteo), weather_history(open_meteo)]), tracer)
         repl(Agent(Conversation(), client, toolbox))
 
 

@@ -2,15 +2,21 @@ from typing import Protocol
 
 from sasoi.claude_client import Reply
 from sasoi.conversation import Conversation
-from sasoi.tools.toolbox import Toolbox
 
 
 class ChatClient(Protocol):
     def send(self, messages: list[dict], tools: list[dict]) -> Reply: ...
 
 
+class Tools(Protocol):
+    @property
+    def definitions(self) -> list[dict]: ...
+
+    def run(self, call: dict) -> dict: ...
+
+
 class Agent:
-    def __init__(self, conversation: Conversation, client: ChatClient, toolbox: Toolbox):
+    def __init__(self, conversation: Conversation, client: ChatClient, toolbox: Tools):
         self._conversation = conversation
         self._client = client
         self._toolbox = toolbox
