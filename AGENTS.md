@@ -28,3 +28,4 @@ Env: `.env` loaded by `cli.main`; `SASOI_MODEL` overrides the default model.
 ## Docs
 
 - [Testing: Relevant test data lives inside the test](docs/testing/relevant-test-data-lives-inside-the-test.md).
+- [Testing: Assertions state exactly what the test claims](docs/testing/assertions-state-exactly-what-the-test-claims.md).
