@@ -6,7 +6,7 @@ import pytest
 from sasoi.claude_client import ClaudeApiError, Reply
 from sasoi.tools.tool import Tool, ToolError
 from sasoi.tools.toolbox import Toolbox
-from sasoi.tracing import TracedClient, TracedToolbox, Tracer
+from sasoi.tracing import TracedClient, TracedSleep, TracedToolbox, Tracer
 
 
 class FakeClient:
@@ -73,6 +73,29 @@ class TestTracedClient:
 
         [event] = recorded(sink)
         assert event["error"] == "529 overloaded_error: Overloaded"
+
+
+    def test_records_retry_after_with_error(self):
+        sink = io.StringIO()
+        error = ClaudeApiError(429, "rate_limit_error", "Too many requests", retry_after=30)
+        client = TracedClient(FakeClient(error), Tracer(sink), timer(A_TIMER_READING, A_TIMER_READING))
+
+        with pytest.raises(ClaudeApiError):
+            client.send([{"role": "user", "content": "hello"}], [])
+
+        [event] = recorded(sink)
+        assert event["retry_after"] == 30
+
+
+class TestTracedSleep:
+    def test_records_wait_and_sleeps(self):
+        sink = io.StringIO()
+        slept: list[float] = []
+
+        TracedSleep(slept.append, Tracer(sink))(2)
+
+        assert recorded(sink) == [{"type": "retry_wait", "seconds": 2}]
+        assert slept == [2]
 
 
 class TestTracedToolbox:

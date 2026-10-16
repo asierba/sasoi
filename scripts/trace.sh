@@ -23,12 +23,14 @@ tail -n +1 -f "$trace_file" | jq --unbuffered -r --argjson full "$full" '
 
   if .type == "session" then
     "● session model=\(.model) max_tokens=\(.max_tokens)"
+  elif .type == "retry_wait" then
+    "• ⏳ retrying in \(.seconds)s"
   elif .type == "tool_call" then
     "• 🔧 \(.name) \(.input | tojson) → \(.result | clip) [\(.duration_ms | round)ms]"
   else
     (.messages[-1] | if .role == "user" and (.content | type) == "string" then "\n→ 🧑 \(.content)\n" else "" end) +
     if .error then
-      "← 🤖 ✗ \(.error) [\(.duration_ms | round)ms]"
+      "← 🤖 ✗ \(.error)\(if .retry_after then " retry-after=\(.retry_after)s" else "" end) [\(.duration_ms | round)ms]"
     else
       "← 🤖 \(.stop_reason) [\(.duration_ms | round)ms]: " + (.content | map(block) | join(" | "))
     end

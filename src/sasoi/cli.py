@@ -1,4 +1,5 @@
 import os
+import time
 from collections.abc import Callable, Mapping
 from dataclasses import dataclass
 from datetime import datetime
@@ -17,7 +18,7 @@ from sasoi.tools.current_time import current_time
 from sasoi.tools.geocode import geocode
 from sasoi.tools.toolbox import Toolbox
 from sasoi.tools.weather_history import weather_history
-from sasoi.tracing import TracedClient, TracedToolbox, Tracer
+from sasoi.tracing import TracedClient, TracedSleep, TracedToolbox, Tracer
 
 DEFAULT_MODEL = "claude-haiku-5-5"
 TRACES_DIR = Path("traces")
@@ -51,7 +52,10 @@ def main() -> None:
     with httpx.Client(timeout=60, trust_env=False) as http, trace_path.open("w") as trace_file:
         tracer = Tracer(trace_file)
         tracer.record({"type": "session", "model": config.model, "max_tokens": MAX_TOKENS})
-        client = RetryingClient(TracedClient(ClaudeClient(config.api_key, config.model, http), tracer))
+        client = RetryingClient(
+            TracedClient(ClaudeClient(config.api_key, config.model, http), tracer),
+            sleep=TracedSleep(time.sleep, tracer),
+        )
         open_meteo = OpenMeteoClient(http)
         toolbox = TracedToolbox(Toolbox([current_time, geocode(open_meteo), weather_history(open_meteo)]), tracer)
         repl(Agent(Conversation(), client, toolbox))

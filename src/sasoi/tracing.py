@@ -4,7 +4,7 @@ from collections.abc import Callable
 from typing import TextIO
 
 from sasoi.agent import ChatClient, Tools
-from sasoi.claude_client import ClaudeError, Reply
+from sasoi.claude_client import ClaudeApiError, ClaudeError, Reply
 
 Timer = Callable[[], float]
 
@@ -18,6 +18,12 @@ class Tracer:
         self._sink.flush()
 
 
+def error_outcome(error: ClaudeError) -> dict:
+    if isinstance(error, ClaudeApiError) and error.retry_after is not None:
+        return {"error": str(error), "retry_after": error.retry_after}
+    return {"error": str(error)}
+
+
 class TracedClient:
     def __init__(self, client: ChatClient, tracer: Tracer, timer: Timer = time.perf_counter):
         self._client = client
@@ -29,7 +35,7 @@ class TracedClient:
         try:
             reply = self._client.send(messages, tools)
         except ClaudeError as error:
-            self._record(messages, tools, start, {"error": str(error)})
+            self._record(messages, tools, start, error_outcome(error))
             raise
         self._record(messages, tools, start, {"content": reply.content, "stop_reason": reply.stop_reason})
         return reply
@@ -39,6 +45,16 @@ class TracedClient:
         self._tracer.record(
             {"type": "claude_call", "messages": messages, "tools": tools, **outcome, "duration_ms": duration_ms}
         )
+
+
+class TracedSleep:
+    def __init__(self, sleep: Callable[[float], None], tracer: Tracer):
+        self._sleep = sleep
+        self._tracer = tracer
+
+    def __call__(self, seconds: float) -> None:
+        self._tracer.record({"type": "retry_wait", "seconds": seconds})
+        self._sleep(seconds)
 
 
 class TracedToolbox:
