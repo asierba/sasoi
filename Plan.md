@@ -258,5 +258,3 @@ Going deeper, such as training models from scratch, is a separate decision for l
 | Hevy Pro | Decision | End of phase 3 | One month at $2.99 to automate strength feedback; keep it only if it earns it |
 | Jev spike | Decision | End of phase 7 | Discriminative model vs an LLM; candidate use: classifying run type for plan matching |
 | Local models | Decision | End of phase 9 | Which steps can run on Ollama |
-
-Decided: Python, one Postgres database for all data, CLI first, personal use only, Strava excluded, Garmin data through Intervals.icu, feedback as a workflow sent by email, Hevy through the free CSV export until Pro is justified, runs first in phase 1.
