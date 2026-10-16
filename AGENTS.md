@@ -1,6 +1,6 @@
 ## Project
 
-Sasoi: personal agent analysing running (Garmin via Intervals.icu) and strength (Hevy) training. Read `Plan.md` for roadmap, scope and decided constraints.
+Sasoi: personal agent analysing running (Garmin Connect) and strength (Hevy) training. Read `Plan.md` for roadmap, scope and decided constraints.
 
 ## Commands
 

@@ -30,7 +30,8 @@ A single-user, self-hosted training assistant. The most valuable feature is auto
 
 | Source | Access route | Cost and status |
 | --- | --- | --- |
-| Garmin (runs) | Intervals.icu API: a free account syncs from Garmin Connect; personal API key; polled | Free; preferred route; Garmin attribution required when displaying data; read full terms |
+| Garmin (runs) | Unofficial Garmin Connect API through the `garminconnect` library: logs in as me, saved token reused; polled | Free; preferred route; data stays on my machine; against Garmin's terms and can break when Garmin changes its login |
+| Garmin (fallback) | Intervals.icu API: a free account syncs from Garmin Connect; personal API key; polled | Free; a third party holds full GPS tracks (home location) and, later, health stats |
 | Garmin (fallback) | FIT export from Garmin Connect, dropped into a watched folder | Free, manual |
 | Hevy (strength) | CSV export from the app (Settings, Export & Import Data) | Free, manual; first route |
 | Hevy (automated) | Official API with a key from Hevy Pro; polled | $2.99/month; only once strength feedback earns it |
@@ -40,13 +41,13 @@ In scope: analysing training and progression, answering questions, charts. Out o
 
 Ingestion is plain, deterministic code with no LLM involved.
 
-Sources: [Strava API changes (TechRepublic)](https://techrepublic.com/article/news-strava-api-scraping-crackdown) · [Garmin developer API pause (the5krunner)](https://the5krunner.com/2026/09/14/garmin-developer-api-access-paused/) · [Hevy API setup (Serval docs)](https://docs.serval.com/sections/integrations/hevy) · [Hevy pricing (Recurdash)](https://recurdash.com/subscription-pricing/hevy) · [Hevy data export (Hevy help)](https://help.hevyapp.com/hc/en-us/articles/38001424401943) · [Intervals.icu API cookbook (forum)](https://forum.intervals.icu/t/intervals-icu-api-integration-cookbook/80090/17) · [Intervals.icu API terms (forum)](https://forum.intervals.icu/t/intervals-icu-api-terms-and-conditions/114087)
+Sources: [Strava API changes (TechRepublic)](https://techrepublic.com/article/news-strava-api-scraping-crackdown) · [Garmin developer API pause (the5krunner)](https://the5krunner.com/2026/09/14/garmin-developer-api-access-paused/) · [Hevy API setup (Serval docs)](https://docs.serval.com/sections/integrations/hevy) · [Hevy pricing (Recurdash)](https://recurdash.com/subscription-pricing/hevy) · [Hevy data export (Hevy help)](https://help.hevyapp.com/hc/en-us/articles/38001424401943) · [python-garminconnect (GitHub)](https://github.com/cyberjunky/python-garminconnect)
 
 ## Architecture
 
 ```mermaid
 flowchart LR
-    intervals["Intervals.icu<br/>synced from Garmin"]
+    garmin["Garmin Connect<br/>unofficial API"]
     hevy["Hevy API<br/>CSV export or Pro API"]
     fit["FIT drop folder<br/>fallback"]
     claude["Claude Messages API"]
@@ -60,7 +61,7 @@ flowchart LR
         email["Email<br/>SMTP; push later"]
     end
 
-    intervals --> sync
+    garmin --> sync
     hevy --> sync
     fit --> sync
     sync --> pg
@@ -91,8 +92,11 @@ Phase 0 runs on the laptop; by the end of phase 1 the same containers move to an
   - [x] ~~Retries with backoff~~
   - [x] ~~Honour the `retry-after` header on 429~~
   - [x] ~~Tokens and cost per turn~~
-- [ ] Data access spike (go/no-go): create an Intervals.icu account, connect Garmin Connect, confirm a recent run arrives with laps and heart rate, and fetch it with curl using the personal API key; export Hevy workouts to CSV and check it has sets, reps, weight and dates; check whether Hevy workouts also reach Garmin Connect. If a route fails, step down the ladder: API, then export files, then screenshots read by a vision model.
-- [ ] Ingestion: pull Intervals.icu activities and the Hevy CSV export into Postgres; inspect the data (exercise naming, units, time zones) before designing the schema
+- [ ] Data access spike (go/no-go). If a route fails, step down the ladder: API, then export files, then screenshots read by a vision model.
+  - [x] ~~Garmin: fetch a recent run with laps, heart rate and per-second streams through the unofficial Garmin Connect API (`scripts/garmin_spike.py`); later runs reuse the saved token without logging in again~~
+  - [ ] Hevy: export workouts to CSV and check it has sets, reps, weight and dates
+  - [ ] Check whether Hevy workouts also reach Garmin Connect
+- [ ] Ingestion: pull Garmin Connect activities and the Hevy CSV export into Postgres; inspect the data (exercise naming, units, time zones) before designing the schema
 - [ ] Data tools: add a read-only `run_sql` tool and the schema description to the loop; Dockerfile and compose file
 - [ ] First evals: 15–20 real questions, each with a hand-written SQL query as ground truth; run the agent and read every trace
 - [ ] Two eval datasets: a frozen, gitignored snapshot of my data, and a small synthetic set in the repo for CI and demos
@@ -107,7 +111,7 @@ Phase 0 runs on the laptop; by the end of phase 1 the same containers move to an
 
 **Build:**
 
-- Sync job polling Intervals.icu, plus a processed-sessions table so nothing is sent twice
+- Sync job polling Garmin Connect, plus a processed-sessions table so nothing is sent twice
 - Jitter in Claude retry backoff, now that the feedback job and the chat can retry at the same time
 - Feedback workflow: context pack, write, validate the numbers, send
 - Feedback evals: numbers checked by code, usefulness and tone scored by an LLM judge
@@ -252,9 +256,8 @@ Going deeper, such as training models from scratch, is a separate decision for l
 
 | Item | Type | Decide by | Notes |
 | --- | --- | --- | --- |
-| Garmin data access | Risk | End of phase 0 (spike) | Intervals.icu (free) is the main route; fallbacks: FIT export from Garmin Connect, then screenshots read by a vision model |
+| Garmin data access | Risk | Ongoing | Unofficial Garmin Connect API confirmed in the spike, but login hit a Cloudflare block and rate limiting before MFA got through; Garmin may break it at any time; fallbacks: Intervals.icu or FIT export from Garmin Connect, then screenshots read by a vision model |
 | Hevy data access | Risk | End of phase 0 (spike) | Free CSV export first; Pro API only for automation; screenshots as last resort |
-| Intervals.icu terms | Risk | End of phase 0 (spike) | Read the full API terms before relying on it |
 | Always-on host | Decision | End of phase 1 | Needed for triggers and the web chat; leaning to a cheap VPS (no spare machine at home); compare providers when deciding, as prices moved a lot in 2026. Later, if the project proves its value, move to a Raspberry Pi or similar cheap home machine |
 | Tracing tool | Decision | End of phase 1 | Depends on the always-on host: self-hosted on it (e.g. Phoenix, Langfuse) vs SaaS; traces contain health data. JSONL files plus `scripts/trace.sh` until then; OpenTelemetry keeps the backend swappable |
 | Hevy Pro | Decision | End of phase 3 | One month at $2.99 to automate strength feedback; keep it only if it earns it |
