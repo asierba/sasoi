@@ -87,7 +87,7 @@ Phase 0 runs on the laptop; by the end of phase 1 the same containers move to an
   - [x] ~~Conversation history~~
   - [x] ~~Two or three toy tools (e.g. current time, calculator) to learn the tool-use loop~~
   - [x] ~~A trace of every call~~
-  - [ ] Stop-reason handling
+  - [x] ~~Stop-reason handling~~
   - [ ] Retries with backoff
   - [ ] Tokens and cost per turn
 - [ ] Data access spike (go/no-go): create an Intervals.icu account, connect Garmin Connect, confirm a recent run arrives with laps and heart rate, and fetch it with curl using the personal API key; export Hevy workouts to CSV and check it has sets, reps, weight and dates; check whether Hevy workouts also reach Garmin Connect. If a route fails, step down the ladder: API, then export files, then screenshots read by a vision model.

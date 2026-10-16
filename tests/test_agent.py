@@ -1,4 +1,6 @@
-from sasoi.agent import Agent
+import pytest
+
+from sasoi.agent import Agent, UnexpectedStopError
 from sasoi.claude_client import Reply
 from sasoi.conversation import Conversation
 from sasoi.tools.tool import Tool
@@ -105,3 +107,30 @@ class TestAgent:
             ],
         ]
         assert answer == "45 minutes until 18:00"
+
+    def test_returns_text_when_stopped_by_stop_sequence(self):
+        client = FakeClient(Reply([{"type": "text", "text": "Done"}], "stop_sequence"))
+
+        answer = Agent(Conversation(), client, Toolbox([])).ask("hello")
+
+        assert answer == "Done"
+
+    @pytest.mark.parametrize("stop_reason", ["max_tokens", "refusal", "pause_turn"])
+    def test_raises_when_reply_stops_unexpectedly(self, stop_reason):
+        client = FakeClient(Reply([{"type": "text", "text": "Partial"}], stop_reason))
+
+        with pytest.raises(UnexpectedStopError, match=f"reply stopped with {stop_reason}"):
+            Agent(Conversation(), client, Toolbox([])).ask("hello")
+
+    def test_keeps_unexpected_reply_out_of_history(self):
+        client = FakeClient(Reply([{"type": "text", "text": "Partial"}], "max_tokens"), text_reply("Hi!"))
+        agent = Agent(Conversation(), client, Toolbox([]))
+
+        with pytest.raises(UnexpectedStopError):
+            agent.ask("first")
+        agent.ask("second")
+
+        assert client.calls[1] == [
+            {"role": "user", "content": "first"},
+            {"role": "user", "content": "second"},
+        ]
