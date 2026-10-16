@@ -57,7 +57,7 @@ class TestOpenMeteoClient:
 
         assert places == []
 
-    def test_hourly_weather_queries_archive_api_for_the_day_in_local_time_and_returns_hours(self):
+    def test_hourly_weather_queries_archive_api_for_the_dates_in_local_time_and_returns_hours(self):
         captured = {}
 
         def handler(request: httpx.Request) -> httpx.Response:
@@ -79,7 +79,7 @@ class TestOpenMeteoClient:
                 },
             )
 
-        hours = client(handler).hourly_weather(43.263, -2.935, "2026-10-14")
+        hours = client(handler).hourly_weather(43.263, -2.935, "2026-10-14", "2026-10-15")
 
         request = captured["request"]
         assert request.url.copy_with(query=None) == "https://archive-api.open-meteo.com/v1/archive"
@@ -87,7 +87,7 @@ class TestOpenMeteoClient:
             "latitude": "43.263",
             "longitude": "-2.935",
             "start_date": "2026-10-14",
-            "end_date": "2026-10-14",
+            "end_date": "2026-10-15",
             "hourly": "temperature_2m,apparent_temperature,relative_humidity_2m,dew_point_2m,precipitation,wind_speed_10m",
             "timezone": "auto",
         }

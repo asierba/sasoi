@@ -7,31 +7,49 @@ from sasoi.tools.tool import ToolError
 from sasoi.tools.weather_history import weather_history
 
 
-AN_INPUT = {"latitude": 43.263, "longitude": -2.935, "date": "2026-10-14"}
+AN_INPUT = {"latitude": 43.263, "longitude": -2.935, "start": "2026-10-14T20:00", "end": "2026-10-15T06:00"}
 
 
 class FakeOpenMeteo:
     def __init__(self, hours: list[WeatherHour] | OpenMeteoError):
         self._hours = hours
-        self.requests: list[tuple[float, float, str]] = []
+        self.requests: list[tuple[float, float, str, str]] = []
 
-    def hourly_weather(self, latitude: float, longitude: float, date: str) -> list[WeatherHour]:
-        self.requests.append((latitude, longitude, date))
+    def hourly_weather(self, latitude: float, longitude: float, start_date: str, end_date: str) -> list[WeatherHour]:
+        self.requests.append((latitude, longitude, start_date, end_date))
         if isinstance(self._hours, OpenMeteoError):
             raise self._hours
         return self._hours
 
 
 class TestWeatherHistory:
-    def test_returns_hourly_weather_for_the_requested_day(self):
-        open_meteo = FakeOpenMeteo([WeatherHour("2026-10-14T09:00", 15.9, 15.1, 88, 13.9, 0.2, 7.4)])
+    def test_returns_only_the_requested_hours(self):
+        open_meteo = FakeOpenMeteo(
+            [
+                WeatherHour("2026-10-14T19:00", 18.0, 20.3, 96, 17.3, 4.7, 2.4),
+                WeatherHour("2026-10-14T20:00", 18.4, 19.1, 96, 17.7, 4.0, 14.0),
+                WeatherHour("2026-10-15T06:00", 11.4, 8.3, 81, 8.2, 0.0, 17.6),
+                WeatherHour("2026-10-15T07:00", 11.3, 7.8, 76, 7.3, 0.0, 19.4),
+            ]
+        )
 
-        result = weather_history(open_meteo).run({"latitude": 43.263, "longitude": -2.935, "date": "2026-10-14"})
+        result = weather_history(open_meteo).run(
+            {"latitude": 43.263, "longitude": -2.935, "start": "2026-10-14T20:00", "end": "2026-10-15T06:00"}
+        )
 
-        assert open_meteo.requests == [(43.263, -2.935, "2026-10-14")]
+        assert open_meteo.requests == [(43.263, -2.935, "2026-10-14", "2026-10-15")]
+        assert [hour["time"] for hour in json.loads(result)] == ["2026-10-14T20:00", "2026-10-15T06:00"]
+
+    def test_returns_each_hour_as_named_fields(self):
+        open_meteo = FakeOpenMeteo([WeatherHour("2026-10-14T20:00", 15.9, 15.1, 88, 13.9, 0.2, 7.4)])
+
+        result = weather_history(open_meteo).run(
+            {"latitude": 43.263, "longitude": -2.935, "start": "2026-10-14T20:00", "end": "2026-10-14T20:00"}
+        )
+
         assert json.loads(result) == [
             {
-                "time": "2026-10-14T09:00",
+                "time": "2026-10-14T20:00",
                 "temperature_c": 15.9,
                 "feels_like_c": 15.1,
                 "humidity_pct": 88,

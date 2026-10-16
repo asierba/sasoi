@@ -47,14 +47,14 @@ class OpenMeteoClient:
         results = self._get(GEOCODING_URL, {"name": name, "count": count}).get("results", [])
         return [_to_place(result) for result in results]
 
-    def hourly_weather(self, latitude: float, longitude: float, date: str) -> list[WeatherHour]:
+    def hourly_weather(self, latitude: float, longitude: float, start_date: str, end_date: str) -> list[WeatherHour]:
         body = self._get(
             ARCHIVE_URL,
             {
                 "latitude": latitude,
                 "longitude": longitude,
-                "start_date": date,
-                "end_date": date,
+                "start_date": start_date,
+                "end_date": end_date,
                 "hourly": ",".join(HOURLY_VARIABLES),
                 "timezone": "auto",
             },
