@@ -3,7 +3,7 @@ import json
 
 import pytest
 
-from sasoi.claude_client import ClaudeApiError, Reply
+from sasoi.claude_client import ClaudeApiError, Reply, Usage
 from sasoi.tools.tool import Tool, ToolError
 from sasoi.tools.toolbox import Toolbox
 from sasoi.tracing import TracedClient, TracedSleep, TracedToolbox, Tracer
@@ -46,7 +46,7 @@ class TestTracer:
 class TestTracedClient:
     def test_records_request_reply_and_duration(self):
         sink = io.StringIO()
-        reply = Reply([{"type": "text", "text": "Hi!"}], "end_turn")
+        reply = Reply([{"type": "text", "text": "Hi!"}], "end_turn", Usage(input_tokens=12, output_tokens=5))
         client = TracedClient(FakeClient(reply), Tracer(sink), timer(1.0, 1.25))
 
         returned = client.send([{"role": "user", "content": "hello"}], [{"name": "current_time"}])
@@ -59,6 +59,7 @@ class TestTracedClient:
                 "tools": [{"name": "current_time"}],
                 "content": [{"type": "text", "text": "Hi!"}],
                 "stop_reason": "end_turn",
+                "usage": {"input_tokens": 12, "output_tokens": 5},
                 "duration_ms": 250.0,
             }
         ]
