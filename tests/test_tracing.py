@@ -30,6 +30,10 @@ def recorded(sink: io.StringIO) -> list[dict]:
 A_TIMER_READING = 0.0
 A_DESCRIPTION = "Does something"
 AN_INPUT_SCHEMA = {"type": "object"}
+A_MESSAGES = [{"role": "user", "content": "hello"}]
+AN_ERROR_TYPE = "an_error"
+AN_ERROR_MESSAGE = "Something went wrong"
+A_TOOL = Tool("a_tool", A_DESCRIPTION, AN_INPUT_SCHEMA, lambda _: "a result")
 
 
 class TestTracer:
@@ -70,19 +74,18 @@ class TestTracedClient:
         client = TracedClient(FakeClient(error), Tracer(sink), timer(A_TIMER_READING, A_TIMER_READING))
 
         with pytest.raises(ClaudeApiError):
-            client.send([{"role": "user", "content": "hello"}], [])
+            client.send(A_MESSAGES, [])
 
         [event] = recorded(sink)
         assert event["error"] == "529 overloaded_error: Overloaded"
 
-
     def test_records_retry_after_with_error(self):
         sink = io.StringIO()
-        error = ClaudeApiError(429, "rate_limit_error", "Too many requests", retry_after=30)
+        error = ClaudeApiError(429, AN_ERROR_TYPE, AN_ERROR_MESSAGE, retry_after=30)
         client = TracedClient(FakeClient(error), Tracer(sink), timer(A_TIMER_READING, A_TIMER_READING))
 
         with pytest.raises(ClaudeApiError):
-            client.send([{"role": "user", "content": "hello"}], [])
+            client.send(A_MESSAGES, [])
 
         [event] = recorded(sink)
         assert event["retry_after"] == 30
@@ -123,18 +126,17 @@ class TestTracedToolbox:
         sink = io.StringIO()
 
         def fail(_):
-            raise ToolError("unknown place")
+            raise ToolError("a failure")
 
-        geocode = Tool("geocode", A_DESCRIPTION, AN_INPUT_SCHEMA, fail)
-        toolbox = TracedToolbox(Toolbox([geocode]), Tracer(sink), timer(A_TIMER_READING, A_TIMER_READING))
+        failing = Tool("failing", A_DESCRIPTION, AN_INPUT_SCHEMA, fail)
+        toolbox = TracedToolbox(Toolbox([failing]), Tracer(sink), timer(A_TIMER_READING, A_TIMER_READING))
 
-        toolbox.run({"type": "tool_use", "id": "toolu_1", "name": "geocode", "input": {}})
+        toolbox.run({"type": "tool_use", "id": "toolu_1", "name": "failing", "input": {}})
 
         [event] = recorded(sink)
         assert event["is_error"] is True
 
     def test_exposes_wrapped_definitions(self):
-        clock = Tool("current_time", A_DESCRIPTION, AN_INPUT_SCHEMA, lambda _: "09:00")
-        toolbox = Toolbox([clock])
+        toolbox = Toolbox([A_TOOL])
 
         assert TracedToolbox(toolbox, Tracer(io.StringIO())).definitions == toolbox.definitions

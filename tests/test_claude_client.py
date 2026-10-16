@@ -96,7 +96,7 @@ class TestClaudeClient:
 
     def test_send_raises_api_error_with_retry_after_seconds(self):
         def handler(request: httpx.Request) -> httpx.Response:
-            return httpx.Response(429, headers={"retry-after": "30"}, text="Too many requests")
+            return httpx.Response(429, headers={"retry-after": "30"})
 
         http = httpx.Client(transport=httpx.MockTransport(handler))
 

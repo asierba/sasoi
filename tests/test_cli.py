@@ -6,6 +6,8 @@ from sasoi.cli import DEFAULT_MODEL, DIM, RED, RESET, YELLOW, Config, load_confi
 from sasoi.pricing import Price
 
 A_USAGE = Usage(input_tokens=1, output_tokens=1)
+A_PROMPT = "a prompt"
+AN_ANSWER_TEXT = "an answer"
 
 
 def answer(text: str) -> Answer:
@@ -50,17 +52,18 @@ class TestRepl:
         agent = FakeAgent(Answer("Hi!", Usage(input_tokens=1_200, output_tokens=300)))
         written: list[str] = []
 
-        repl(agent, Price(input_per_mtok=1.00, output_per_mtok=5.00), read=typed("hello"), write=written.append)
+        repl(agent, Price(input_per_mtok=1.00, output_per_mtok=5.00), read=typed(A_PROMPT), write=written.append)
 
         assert written == ["Hi!", f"{DIM}1,200 in · 300 out · $0.0027{RESET}"]
 
     def test_writes_tokens_only_when_model_has_no_price(self):
-        agent = FakeAgent(Answer("Hi!", Usage(input_tokens=1_200, output_tokens=300)))
+        agent = FakeAgent(Answer(AN_ANSWER_TEXT, Usage(input_tokens=1_200, output_tokens=300)))
         written: list[str] = []
 
-        repl(agent, None, read=typed("hello"), write=written.append)
+        repl(agent, None, read=typed(A_PROMPT), write=written.append)
 
-        assert written[1] == f"{DIM}1,200 in · 300 out{RESET}"
+        [_, usage_line] = written
+        assert usage_line == f"{DIM}1,200 in · 300 out{RESET}"
 
     def test_skips_empty_prompts(self):
         agent = FakeAgent()
@@ -73,7 +76,7 @@ class TestRepl:
         agent = FakeAgent(ClaudeApiError(529, "overloaded_error", "Overloaded"), answer("second reply"))
         written: list[str] = []
 
-        repl(agent, read=typed("first", "second"), write=written.append)
+        repl(agent, read=typed(A_PROMPT, A_PROMPT), write=written.append)
 
         assert written[:2] == [f"{RED}Error: 529 overloaded_error: Overloaded{RESET}", "second reply"]
 
@@ -81,7 +84,7 @@ class TestRepl:
         agent = FakeAgent(KeyboardInterrupt(), answer("second reply"))
         written: list[str] = []
 
-        repl(agent, read=typed("first", "second"), write=written.append)
+        repl(agent, read=typed(A_PROMPT, A_PROMPT), write=written.append)
 
         assert written[:2] == [f"{YELLOW}Interrupted{RESET}", "second reply"]
 
