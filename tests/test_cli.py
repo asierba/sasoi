@@ -46,7 +46,8 @@ class TestRepl:
         repl(agent, read=typed("hello", "what did I say?"), write=written.append)
 
         assert agent.prompts == ["hello", "what did I say?"]
-        assert written[0::2] == ["Hi!", "You said hello"]
+        [first_answer, _, second_answer, _] = written
+        assert [first_answer, second_answer] == ["Hi!", "You said hello"]
 
     def test_writes_tokens_and_cost_after_each_answer(self):
         agent = FakeAgent(Answer("Hi!", Usage(input_tokens=1_200, output_tokens=300)))
@@ -78,7 +79,8 @@ class TestRepl:
 
         repl(agent, read=typed(A_PROMPT, A_PROMPT), write=written.append)
 
-        assert written[:2] == [f"{RED}Error: 529 overloaded_error: Overloaded{RESET}", "second reply"]
+        [error, second_answer, _] = written
+        assert [error, second_answer] == [f"{RED}Error: 529 overloaded_error: Overloaded{RESET}", "second reply"]
 
     def test_shows_interrupted_in_yellow_on_ctrl_c_and_keeps_going(self):
         agent = FakeAgent(KeyboardInterrupt(), answer("second reply"))
@@ -86,7 +88,8 @@ class TestRepl:
 
         repl(agent, read=typed(A_PROMPT, A_PROMPT), write=written.append)
 
-        assert written[:2] == [f"{YELLOW}Interrupted{RESET}", "second reply"]
+        [interrupted, second_answer, _] = written
+        assert [interrupted, second_answer] == [f"{YELLOW}Interrupted{RESET}", "second reply"]
 
 
 class TestLoadConfig:

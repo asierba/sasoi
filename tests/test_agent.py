@@ -134,7 +134,8 @@ class TestAgent:
             agent.ask("first")
         agent.ask("second")
 
-        assert client.calls[1] == [
+        [_, second_call] = client.calls
+        assert second_call == [
             {"role": "user", "content": "first"},
             {"role": "user", "content": "second"},
         ]

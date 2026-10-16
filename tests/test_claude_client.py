@@ -13,7 +13,7 @@ A_USAGE = {"input_tokens": 1, "output_tokens": 1}
 
 
 class TestClaudeClient:
-    def test_send_posts_prompt_and_returns_text(self):
+    def test_send_posts_prompt_and_returns_text_and_usage(self):
         captured = {}
 
         def handler(request: httpx.Request) -> httpx.Response:
