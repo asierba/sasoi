@@ -12,6 +12,7 @@ from sasoi.agent import Agent
 from sasoi.claude_client import MAX_TOKENS, ClaudeClient, ClaudeError
 from sasoi.conversation import Conversation
 from sasoi.open_meteo_client import OpenMeteoClient
+from sasoi.retrying import RetryingClient
 from sasoi.tools.current_time import current_time
 from sasoi.tools.geocode import geocode
 from sasoi.tools.toolbox import Toolbox
@@ -50,7 +51,7 @@ def main() -> None:
     with httpx.Client(timeout=60, trust_env=False) as http, trace_path.open("w") as trace_file:
         tracer = Tracer(trace_file)
         tracer.record({"type": "session", "model": config.model, "max_tokens": MAX_TOKENS})
-        client = TracedClient(ClaudeClient(config.api_key, config.model, http), tracer)
+        client = RetryingClient(TracedClient(ClaudeClient(config.api_key, config.model, http), tracer))
         open_meteo = OpenMeteoClient(http)
         toolbox = TracedToolbox(Toolbox([current_time, geocode(open_meteo), weather_history(open_meteo)]), tracer)
         repl(Agent(Conversation(), client, toolbox))
