@@ -89,6 +89,7 @@ Phase 0 runs on the laptop; by the end of phase 1 the same containers move to an
   - [x] ~~A trace of every call~~
   - [x] ~~Stop-reason handling~~
   - [x] ~~Retries with backoff~~
+  - [ ] Honour the `retry-after` header on 429
   - [ ] Tokens and cost per turn
 - [ ] Data access spike (go/no-go): create an Intervals.icu account, connect Garmin Connect, confirm a recent run arrives with laps and heart rate, and fetch it with curl using the personal API key; export Hevy workouts to CSV and check it has sets, reps, weight and dates; check whether Hevy workouts also reach Garmin Connect. If a route fails, step down the ladder: API, then export files, then screenshots read by a vision model.
 - [ ] Ingestion: pull Intervals.icu activities and the Hevy CSV export into Postgres; inspect the data (exercise naming, units, time zones) before designing the schema
@@ -107,6 +108,7 @@ Phase 0 runs on the laptop; by the end of phase 1 the same containers move to an
 **Build:**
 
 - Sync job polling Intervals.icu, plus a processed-sessions table so nothing is sent twice
+- Jitter in Claude retry backoff, now that the feedback job and the chat can retry at the same time
 - Feedback workflow: context pack, write, validate the numbers, send
 - Feedback evals: numbers checked by code, usefulness and tone scored by an LLM judge
 - Move to the always-on host, with images built for both amd64 and arm64 so the app runs on an x86 or ARM VPS and later on a Raspberry Pi
