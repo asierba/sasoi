@@ -33,7 +33,8 @@ A single-user, self-hosted training assistant. The most valuable feature is auto
 | Garmin (runs) | Unofficial Garmin Connect API through the `garminconnect` library: logs in as me, saved token reused; polled | Free; preferred route; data stays on my machine; against Garmin's terms and can break when Garmin changes its login |
 | Garmin (fallback) | Intervals.icu API: a free account syncs from Garmin Connect; personal API key; polled | Free; a third party holds full GPS tracks (home location) and, later, health stats |
 | Garmin (fallback) | FIT export from Garmin Connect, dropped into a watched folder | Free, manual |
-| Hevy (strength) | CSV export from the app (Settings, Export & Import Data) | Free, manual; first route |
+| Hevy (strength) | Private web API (`api.hevyapp.com`) with my login's bearer token; polled | Free; preferred route; same data as the CSV plus IDs, UTC times and exercise template IDs; not documented or authorised by Hevy; the token dies on logout and renewing it is unsolved |
+| Hevy (fallback) | CSV export from the app (Settings, Export & Import Data) | Free, manual |
 | Hevy (automated) | Official API with a key from Hevy Pro; polled | $2.99/month; only once strength feedback earns it |
 | Strava | Not used | API Policy (2026) §5.3 bans Strava data, even stored or derived, from any AI application, including a model's context window; the allowed Strava MCP needs a subscription; worse data than Garmin and no structured strength sets |
 
@@ -48,7 +49,7 @@ Sources: [Strava API Policy (2026)](https://www.strava.com/legal/api_policy) · 
 ```mermaid
 flowchart LR
     garmin["Garmin Connect<br/>unofficial API"]
-    hevy["Hevy API<br/>CSV export or Pro API"]
+    hevy["Hevy<br/>private API, CSV or Pro API"]
     fit["FIT drop folder<br/>fallback"]
     claude["Claude Messages API"]
 
@@ -92,11 +93,12 @@ Phase 0 runs on the laptop; by the end of phase 1 the same containers move to an
   - [x] ~~Retries with backoff~~
   - [x] ~~Honour the `retry-after` header on 429~~
   - [x] ~~Tokens and cost per turn~~
-- [ ] Data access spike (go/no-go). If a route fails, step down the ladder: API, then export files, then screenshots read by a vision model.
+- [x] ~~Data access spike (go/no-go). If a route fails, step down the ladder: API, then export files, then screenshots read by a vision model.~~
   - [x] ~~Garmin: fetch a recent run with laps, heart rate and per-second streams through the unofficial Garmin Connect API (`scripts/garmin_spike.py`); later runs reuse the saved token without logging in again~~
-  - [ ] Hevy: export workouts to CSV and check it has sets, reps, weight and dates
+  - [x] ~~Hevy: export workouts to CSV and check it has sets, reps, weight and dates~~
+  - [x] ~~Hevy private web API: fetch every workout with the web app's bearer token (`scripts/hevy_spike.py`); all 72 workouts and 1363 sets match the CSV~~
   - [x] ~~Check whether Hevy workouts also reach Garmin Connect: no native sync, as Garmin refused Hevy API access; third-party sync (hevy2garmin) needs Hevy Pro, which would give direct API access anyway~~
-- [ ] Ingestion: pull Garmin Connect activities and the Hevy CSV export into Postgres; inspect the data (exercise naming, units, time zones) before designing the schema
+- [ ] Ingestion: pull Garmin Connect activities and Hevy workouts into Postgres; inspect the data (exercise naming, units, time zones) before designing the schema
 - [ ] Data tools: add a read-only `run_sql` tool and the schema description to the loop; Dockerfile and compose file
 - [ ] First evals: 15–20 real questions, each with a hand-written SQL query as ground truth; run the agent and read every trace
 - [ ] Two eval datasets: a frozen, gitignored snapshot of my data, and a small synthetic set in the repo for CI and demos
@@ -146,12 +148,12 @@ Phase 0 runs on the laptop; by the end of phase 1 the same containers move to an
 **Build:**
 
 - Strength context pack: volume, top sets, estimated 1RM, comparison with recent sessions
-- Input: a fresh Hevy CSV export dropped in a folder, or the Hevy API if Pro is worth paying for
+- Input: the Hevy private API once token renewal is solved, or the Pro API if it is worth paying for; a fresh CSV export dropped in a folder until then
 - Strength cases added to the feedback evals
 
 **Ships:** feedback after every strength session.
 
-**Done when:** strength feedback passes its evals and the Hevy Pro decision is made. Until Pro, each session needs a manual CSV export.
+**Done when:** strength feedback passes its evals and the Hevy access route is decided.
 
 ### Phase 4 · Evals and agent hardening
 
@@ -257,9 +259,9 @@ Going deeper, such as training models from scratch, is a separate decision for l
 | Item | Type | Decide by | Notes |
 | --- | --- | --- | --- |
 | Garmin data access | Risk | Ongoing | Unofficial Garmin Connect API confirmed in the spike, but login hit a Cloudflare block and rate limiting before MFA got through; Garmin may break it at any time; fallbacks: Intervals.icu or FIT export from Garmin Connect, then screenshots read by a vision model |
-| Hevy data access | Risk | End of phase 0 (spike) | Free CSV export first; Pro API only for automation; screenshots as last resort |
+| Hevy data access | Risk | Ongoing | Private web API confirmed in the spike, but the bearer token dies on logout and how to get a new one is unknown; Hevy may block it at any time; fallbacks: Pro API, CSV export, then screenshots |
 | Always-on host | Decision | End of phase 1 | Needed for triggers and the web chat; leaning to a cheap VPS (no spare machine at home); compare providers when deciding, as prices moved a lot in 2026. Later, if the project proves its value, move to a Raspberry Pi or similar cheap home machine |
 | Tracing tool | Decision | End of phase 1 | Depends on the always-on host: self-hosted on it (e.g. Phoenix, Langfuse) vs SaaS; traces contain health data. JSONL files plus `scripts/trace.sh` until then; OpenTelemetry keeps the backend swappable |
-| Hevy Pro | Decision | End of phase 3 | One month at $2.99 to automate strength feedback; keep it only if it earns it |
+| Hevy access route | Decision | End of phase 3 | Private API (needs automatic token renewal) vs Hevy Pro at $2.99/month; keep Pro only if it earns it |
 | Jev spike | Decision | End of phase 7 | Discriminative model vs an LLM; candidate use: classifying run type for plan matching |
 | Local models | Decision | End of phase 9 | Which steps can run on Ollama |
