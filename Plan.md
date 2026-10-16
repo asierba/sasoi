@@ -86,7 +86,7 @@ Phase 0 runs on the laptop; by the end of phase 1 the same containers move to an
 - [ ] Agent loop (first deliverable, no fitness data yet): a chat CLI that talks to the Claude Messages API over raw HTTP
   - [x] ~~Conversation history~~
   - [x] ~~Two or three toy tools (e.g. current time, calculator) to learn the tool-use loop~~
-  - [ ] A trace of every call
+  - [x] ~~A trace of every call~~
   - [ ] Stop-reason handling
   - [ ] Retries with backoff
   - [ ] Tokens and cost per turn
@@ -226,6 +226,7 @@ Phase 0 runs on the laptop; by the end of phase 1 the same containers move to an
 - Cost budgets and model routing (Haiku vs Sonnet per step)
 - Local models experiment
 - Online evals and alerts
+- Check whether we want a better way to trace (e.g. a browser UI with OpenTelemetry + Phoenix, or self-hosted Langfuse)
 
 **Ships:** the assistant running unattended, safely and cheaply.
 
