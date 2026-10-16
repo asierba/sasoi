@@ -13,6 +13,12 @@ def is_transient(error: ClaudeError) -> bool:
     return isinstance(error, ClaudeApiError) and (error.status_code == 429 or error.status_code >= 500)
 
 
+def wait_before_retry(error: ClaudeError, backoff: float) -> float:
+    if isinstance(error, ClaudeApiError) and error.retry_after is not None:
+        return error.retry_after
+    return backoff
+
+
 class RetryingClient:
     def __init__(
         self,
@@ -31,5 +37,5 @@ class RetryingClient:
             except ClaudeError as error:
                 if not is_transient(error):
                     raise
-            self._sleep(delay)
+                self._sleep(wait_before_retry(error, delay))
         return self._client.send(messages, tools)

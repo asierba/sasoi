@@ -16,19 +16,22 @@ class ClaudeConnectionError(ClaudeError):
 
 
 class ClaudeApiError(ClaudeError):
-    def __init__(self, status_code: int, error_type: str | None, message: str):
+    def __init__(self, status_code: int, error_type: str | None, message: str, retry_after: float | None = None):
         super().__init__(f"{status_code} {error_type or 'unknown_error'}: {message}")
         self.status_code = status_code
         self.error_type = error_type
         self.message = message
+        self.retry_after = retry_after
 
     @classmethod
     def from_response(cls, response: httpx.Response) -> "ClaudeApiError":
+        retry_after = response.headers.get("retry-after")
+        seconds = float(retry_after) if retry_after else None
         try:
             error = response.json()["error"]
-            return cls(response.status_code, error["type"], error["message"])
+            return cls(response.status_code, error["type"], error["message"], seconds)
         except (ValueError, KeyError, TypeError):
-            return cls(response.status_code, None, response.text)
+            return cls(response.status_code, None, response.text, seconds)
 
 
 @dataclass(frozen=True)

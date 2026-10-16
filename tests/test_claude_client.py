@@ -91,6 +91,17 @@ class TestClaudeClient:
         assert raised.value.error_type is None
         assert raised.value.message == "Bad Gateway"
 
+    def test_send_raises_api_error_with_retry_after_seconds(self):
+        def handler(request: httpx.Request) -> httpx.Response:
+            return httpx.Response(429, headers={"retry-after": "30"}, text="Too many requests")
+
+        http = httpx.Client(transport=httpx.MockTransport(handler))
+
+        with pytest.raises(ClaudeApiError) as raised:
+            ClaudeClient(A_KEY, A_MODEL, http).send(A_MESSAGES, [])
+
+        assert raised.value.retry_after == 30.0
+
     def test_send_raises_connection_error_when_network_fails(self):
         def handler(request: httpx.Request) -> httpx.Response:
             raise httpx.ConnectError("nodename nor servname provided", request=request)
