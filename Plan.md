@@ -263,9 +263,9 @@ One short build-log post at the end of phases 1, 5, 6, 7 and 8, capped at an aft
 | Garmin data access | Risk | End of phase 0 (spike) | Intervals.icu (free) is the main route; fallbacks: FIT export from Garmin Connect, then screenshots read by a vision model |
 | Hevy data access | Risk | End of phase 0 (spike) | Free CSV export first; Pro API only for automation; screenshots as last resort |
 | Intervals.icu terms | Risk | End of phase 0 (spike) | Read the full API terms before relying on it |
-| Tracing tool | Decision | Before phase 1 ends | Depends on the always-on host: self-hosted on it (e.g. Phoenix, Langfuse) vs SaaS; traces contain health data. JSONL files plus `scripts/trace.sh` until then; OpenTelemetry keeps the backend swappable |
+| Tracing tool | Decision | End of phase 1 | Depends on the always-on host: self-hosted on it (e.g. Phoenix, Langfuse) vs SaaS; traces contain health data. JSONL files plus `scripts/trace.sh` until then; OpenTelemetry keeps the backend swappable |
 | Delivery channel | Decision | Start of phase 1 | Email first; ntfy push (works without Google services) in phase 9; Telegram bot as a stretch for two-way chat |
-| Always-on host | Decision | Before phase 1 ends | Needed for triggers and the web chat; leaning to a cheap VPS (no spare machine at home); compare providers when deciding, as prices moved a lot in 2026. Later, if the project proves its value, move to a Raspberry Pi or similar cheap home machine |
+| Always-on host | Decision | End of phase 1 | Needed for triggers and the web chat; leaning to a cheap VPS (no spare machine at home); compare providers when deciding, as prices moved a lot in 2026. Later, if the project proves its value, move to a Raspberry Pi or similar cheap home machine |
 | Hevy Pro | Decision | Start of phase 3 | One month at $2.99 to automate strength feedback; keep it only if it earns it |
 | Jev spike | Decision | Start of phase 7 | Discriminative model vs an LLM; candidate use: classifying run type for plan matching |
 | Local models | Decision | Start of phase 9 | Which steps can run on Ollama |
