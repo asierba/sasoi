@@ -260,10 +260,10 @@ One short build-log post at the end of phases 1, 5, 6, 7 and 8, capped at an aft
 
 | Item | Type | Decide by | Notes |
 | --- | --- | --- | --- |
-| Garmin data access | Risk | Start of phase 0 (spike) | Intervals.icu (free) is the main route; fallbacks: FIT export from Garmin Connect, then screenshots read by a vision model |
-| Hevy data access | Risk | Start of phase 0 (spike) | Free CSV export first; Pro API only for automation; screenshots as last resort |
-| Intervals.icu terms | Risk | Start of phase 0 (spike) | Read the full API terms before relying on it |
-| API key and costs | Open question | Start of phase 0 | Personal key or an organisation account |
+| Garmin data access | Risk | End of phase 0 (spike) | Intervals.icu (free) is the main route; fallbacks: FIT export from Garmin Connect, then screenshots read by a vision model |
+| Hevy data access | Risk | End of phase 0 (spike) | Free CSV export first; Pro API only for automation; screenshots as last resort |
+| Intervals.icu terms | Risk | End of phase 0 (spike) | Read the full API terms before relying on it |
+| API key and costs | Open question | End of phase 0 | Personal key or an organisation account |
 | Tracing tool | Decision | Before phase 1 ends | Depends on the always-on host: self-hosted on it (e.g. Phoenix, Langfuse) vs SaaS; traces contain health data. JSONL files plus `scripts/trace.sh` until then; OpenTelemetry keeps the backend swappable |
 | Delivery channel | Decision | Start of phase 1 | Email first; ntfy push (works without Google services) in phase 9; Telegram bot as a stretch for two-way chat |
 | Always-on host | Decision | Before phase 1 ends | Needed for triggers and the web chat; leaning to a cheap VPS (no spare machine at home); compare providers when deciding, as prices moved a lot in 2026. Later, if the project proves its value, move to a Raspberry Pi or similar cheap home machine |
