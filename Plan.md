@@ -246,16 +246,6 @@ No course. Learn the slice of ML that makes the other areas better, when a phase
 
 Going deeper, such as training models from scratch, is a separate decision for later.
 
-## Writing
-
-One short build-log post at the end of phases 1, 5, 6, 7 and 8, capped at an afternoon each. Each covers a finding, not progress.
-
-- Phase 1: workflow vs agent, and how I evaluate generated feedback
-- Phase 5: generated SQL vs dedicated metric tools on my own data
-- Phase 6: turning a training plan into structured data, and measuring it
-- Phase 7: Jev vs Haiku on calibration and latency, if the spike happens
-- Phase 8: my own loop vs the Agent SDK on the same evals
-
 ## Open decisions and risks
 
 | Item | Type | Decide by | Notes |
