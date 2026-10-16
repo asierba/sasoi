@@ -222,7 +222,7 @@ Phase 0 runs on the laptop; by the end of phase 1 the same containers move to an
 **Build:**
 
 - Charts in the web chat
-- ntfy push notifications
+- Other delivery channels: ntfy push notifications (works without Google services), Telegram bot for two-way chat
 - Secrets review
 - Cost budgets and model routing (Haiku vs Sonnet per step)
 - Local models experiment
@@ -264,10 +264,9 @@ One short build-log post at the end of phases 1, 5, 6, 7 and 8, capped at an aft
 | Hevy data access | Risk | End of phase 0 (spike) | Free CSV export first; Pro API only for automation; screenshots as last resort |
 | Intervals.icu terms | Risk | End of phase 0 (spike) | Read the full API terms before relying on it |
 | Tracing tool | Decision | End of phase 1 | Depends on the always-on host: self-hosted on it (e.g. Phoenix, Langfuse) vs SaaS; traces contain health data. JSONL files plus `scripts/trace.sh` until then; OpenTelemetry keeps the backend swappable |
-| Delivery channel | Decision | Start of phase 1 | Email first; ntfy push (works without Google services) in phase 9; Telegram bot as a stretch for two-way chat |
 | Always-on host | Decision | End of phase 1 | Needed for triggers and the web chat; leaning to a cheap VPS (no spare machine at home); compare providers when deciding, as prices moved a lot in 2026. Later, if the project proves its value, move to a Raspberry Pi or similar cheap home machine |
-| Hevy Pro | Decision | Start of phase 3 | One month at $2.99 to automate strength feedback; keep it only if it earns it |
-| Jev spike | Decision | Start of phase 7 | Discriminative model vs an LLM; candidate use: classifying run type for plan matching |
-| Local models | Decision | Start of phase 9 | Which steps can run on Ollama |
+| Hevy Pro | Decision | End of phase 3 | One month at $2.99 to automate strength feedback; keep it only if it earns it |
+| Jev spike | Decision | End of phase 7 | Discriminative model vs an LLM; candidate use: classifying run type for plan matching |
+| Local models | Decision | End of phase 9 | Which steps can run on Ollama |
 
 Decided: Python, one Postgres database for all data, CLI first, personal use only, Strava excluded, Garmin data through Intervals.icu, feedback as a workflow sent by email, Hevy through the free CSV export until Pro is justified, runs first in phase 1.
