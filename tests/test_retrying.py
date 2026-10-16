@@ -55,6 +55,16 @@ class TestRetryingClient:
 
         assert waits == [30]
 
+    def test_raises_without_waiting_when_retry_after_exceeds_max_wait(self):
+        rate_limited = ClaudeApiError(429, "rate_limit_error", "Too many requests", retry_after=45115)
+        client = FakeClient(rate_limited)
+        waits: list[float] = []
+
+        with pytest.raises(ClaudeApiError):
+            RetryingClient(client, backoff=(1,), sleep=waits.append, max_wait=60).send(A_MESSAGES, [])
+
+        assert waits == []
+
     def test_raises_last_error_when_retries_run_out(self):
         first = ClaudeApiError(529, "overloaded_error", "first")
         last = ClaudeApiError(529, "overloaded_error", "last")

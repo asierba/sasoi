@@ -5,6 +5,7 @@ from sasoi.agent import ChatClient
 from sasoi.claude_client import ClaudeApiError, ClaudeConnectionError, ClaudeError, Reply
 
 BACKOFF_SECONDS = (1, 2, 4)
+MAX_WAIT_SECONDS = 60
 
 
 def is_transient(error: ClaudeError) -> bool:
@@ -25,17 +26,20 @@ class RetryingClient:
         client: ChatClient,
         backoff: Sequence[float] = BACKOFF_SECONDS,
         sleep: Callable[[float], None] = time.sleep,
+        max_wait: float = MAX_WAIT_SECONDS,
     ):
         self._client = client
         self._backoff = backoff
         self._sleep = sleep
+        self._max_wait = max_wait
 
     def send(self, messages: list[dict], tools: list[dict]) -> Reply:
         for delay in self._backoff:
             try:
                 return self._client.send(messages, tools)
             except ClaudeError as error:
-                if not is_transient(error):
+                wait = wait_before_retry(error, delay)
+                if not is_transient(error) or wait > self._max_wait:
                     raise
-                self._sleep(wait_before_retry(error, delay))
+                self._sleep(wait)
         return self._client.send(messages, tools)
