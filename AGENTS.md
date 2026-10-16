@@ -8,7 +8,7 @@ Sasoi: personal agent analysing running (Garmin via Intervals.icu) and strength 
 uv sync                                   # install
 uv run sasoi                              # chat REPL (needs ANTHROPIC_API_KEY in .env)
 uv run pytest                             # all tests
-uv run pytest tests/test_cli.py::test_repl_skips_empty_prompts   # single test
+uv run pytest tests/test_cli.py::TestRepl::test_skips_empty_prompts   # single test
 ```
 
 Env: `.env` loaded by `cli.main`; `SASOI_MODEL` overrides the default model.

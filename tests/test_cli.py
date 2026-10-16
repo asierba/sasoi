@@ -28,48 +28,46 @@ def typed(*lines: str):
     return read
 
 
-def test_repl_writes_each_answer():
-    agent = FakeAgent("Hi!", "You said hello")
-    written: list[str] = []
+class TestRepl:
+    def test_writes_each_answer(self):
+        agent = FakeAgent("Hi!", "You said hello")
+        written: list[str] = []
 
-    repl(agent, read=typed("hello", "what did I say?"), write=written.append)
+        repl(agent, read=typed("hello", "what did I say?"), write=written.append)
 
-    assert agent.prompts == ["hello", "what did I say?"]
-    assert written == ["Hi!", "You said hello"]
+        assert agent.prompts == ["hello", "what did I say?"]
+        assert written == ["Hi!", "You said hello"]
 
+    def test_skips_empty_prompts(self):
+        agent = FakeAgent()
 
-def test_repl_skips_empty_prompts():
-    agent = FakeAgent()
+        repl(agent, read=typed("   ", ""), write=lambda text: None)
 
-    repl(agent, read=typed("   ", ""), write=lambda text: None)
+        assert agent.prompts == []
 
-    assert agent.prompts == []
+    def test_shows_api_error_in_red_and_keeps_going(self):
+        agent = FakeAgent(ClaudeApiError(529, "overloaded_error", "Overloaded"), "second reply")
+        written: list[str] = []
 
+        repl(agent, read=typed("first", "second"), write=written.append)
 
-def test_repl_shows_api_error_in_red_and_keeps_going():
-    agent = FakeAgent(ClaudeApiError(529, "overloaded_error", "Overloaded"), "second reply")
-    written: list[str] = []
+        assert written == [f"{RED}Error: 529 overloaded_error: Overloaded{RESET}", "second reply"]
 
-    repl(agent, read=typed("first", "second"), write=written.append)
+    def test_shows_interrupted_in_yellow_on_ctrl_c_and_keeps_going(self):
+        agent = FakeAgent(KeyboardInterrupt(), "second reply")
+        written: list[str] = []
 
-    assert written == [f"{RED}Error: 529 overloaded_error: Overloaded{RESET}", "second reply"]
+        repl(agent, read=typed("first", "second"), write=written.append)
 
-
-def test_repl_shows_interrupted_in_yellow_on_ctrl_c_and_keeps_going():
-    agent = FakeAgent(KeyboardInterrupt(), "second reply")
-    written: list[str] = []
-
-    repl(agent, read=typed("first", "second"), write=written.append)
-
-    assert written == [f"{YELLOW}Interrupted{RESET}", "second reply"]
+        assert written == [f"{YELLOW}Interrupted{RESET}", "second reply"]
 
 
-def test_load_config_exits_with_message_when_api_key_missing():
-    with pytest.raises(SystemExit) as raised:
-        load_config({})
+class TestLoadConfig:
+    def test_exits_with_message_when_api_key_missing(self):
+        with pytest.raises(SystemExit) as raised:
+            load_config({})
 
-    assert raised.value.code == f"{RED}Error: ANTHROPIC_API_KEY is not set{RESET}"
+        assert raised.value.code == f"{RED}Error: ANTHROPIC_API_KEY is not set{RESET}"
 
-
-def test_load_config_uses_default_model_when_not_set():
-    assert load_config({"ANTHROPIC_API_KEY": "key"}) == Config("key", DEFAULT_MODEL)
+    def test_uses_default_model_when_not_set(self):
+        assert load_config({"ANTHROPIC_API_KEY": "key"}) == Config("key", DEFAULT_MODEL)
