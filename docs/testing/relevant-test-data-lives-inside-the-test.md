@@ -18,19 +18,21 @@ Every value that drives the behaviour under test or appears in the assertion is 
 A_STOP_REASON = "end_turn"
 
 
-def test_reply_returns_text():
-    reply = Reply([{"type": "text", "text": "Hello"}], A_STOP_REASON)
+class TestReply:
+    def test_returns_text(self):
+        reply = Reply([{"type": "text", "text": "Hello"}], A_STOP_REASON)
 
-    assert reply.text == "Hello"
+        assert reply.text == "Hello"
 ```
 
 ### Good: the block to ignore reduced to its type
 
 ```python
-def test_reply_text_ignores_non_text_blocks():
-    reply = Reply([{"type": "text", "text": "Let me check"}, {"type": "tool_use"}], A_STOP_REASON)
+class TestReply:
+    def test_text_ignores_non_text_blocks(self):
+        reply = Reply([{"type": "text", "text": "Let me check"}, {"type": "tool_use"}], A_STOP_REASON)
 
-    assert reply.text == "Let me check"
+        assert reply.text == "Let me check"
 ```
 
 ### Bad: asserted values defined away from the test
@@ -40,30 +42,33 @@ TEXT_BLOCK = {"type": "text", "text": "Let me check the time"}
 TOOL_USE_BLOCK = {"type": "tool_use", "id": "toolu_1", "name": "current_time", "input": {}}
 
 
-def test_reply_text_ignores_non_text_blocks():
-    reply = Reply([TEXT_BLOCK, TOOL_USE_BLOCK], "tool_use")
+class TestReply:
+    def test_text_ignores_non_text_blocks(self):
+        reply = Reply([TEXT_BLOCK, TOOL_USE_BLOCK], "tool_use")
 
-    assert reply.text == "Let me check the time"
+        assert reply.text == "Let me check the time"
 ```
 
 ### Bad: required but irrelevant value looks meaningful
 
 ```python
-def test_reply_returns_text():
-    reply = Reply([{"type": "text", "text": "Hello"}], "end_turn")
+class TestReply:
+    def test_returns_text(self):
+        reply = Reply([{"type": "text", "text": "Hello"}], "end_turn")
 
-    assert reply.text == "Hello"
+        assert reply.text == "Hello"
 ```
 
 ### Bad: setup unrelated to the assertion
 
 ```python
-def test_send_posts_prompt_and_returns_text():
-    tools = [{"name": "current_time", "description": "Now", "input_schema": {"type": "object"}}]
+class TestClaudeClient:
+    def test_send_posts_prompt_and_returns_text(self):
+        tools = [{"name": "current_time", "description": "Now", "input_schema": {"type": "object"}}]
 
-    reply = client.send([{"role": "user", "content": "hi"}], tools)
+        reply = client.send([{"role": "user", "content": "hi"}], tools)
 
-    assert reply.text == "Hello there"
+        assert reply.text == "Hello there"
 ```
 
 ## Real world examples
