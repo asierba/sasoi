@@ -9,7 +9,7 @@ from yoyo import get_backend, read_migrations
 
 from sasoi.cli import RED, RESET
 from sasoi.ingest.garmin_login import login as garmin_login
-from sasoi.ingest.garmin_source import GarminSource
+from sasoi.ingest.garmin_source import MAX_RECENT_RUNS, GarminSource
 from sasoi.ingest.raw_store import RawStore
 from sasoi.ingest.sync import sync_garmin
 
@@ -23,7 +23,14 @@ class SyncConfig:
 
 
 def load_config(env: Mapping[str, str]) -> SyncConfig:
-    return SyncConfig(_required(env, "DATABASE_URL"), int(_required(env, "SASOI_GARMIN_LIMIT")))
+    return SyncConfig(_required(env, "DATABASE_URL"), _garmin_limit(env))
+
+
+def _garmin_limit(env: Mapping[str, str]) -> int:
+    limit = int(_required(env, "SASOI_GARMIN_LIMIT"))
+    if limit > MAX_RECENT_RUNS:
+        raise SystemExit(f"{RED}Error: SASOI_GARMIN_LIMIT cannot exceed {MAX_RECENT_RUNS}{RESET}")
+    return limit
 
 
 def _required(env: Mapping[str, str], name: str) -> str:
