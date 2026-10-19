@@ -26,13 +26,13 @@ Env: `.env` loaded by `cli.main`; `SASOI_MODEL` picks the model (required, no de
 - `settings.py`: `required` env lookup and `SettingError`; config loaders raise it, each `main` formats it for its output.
 - `retrying.py`: `RetryingClient` wraps the Claude client, retrying connection errors, 429 and 5xx with backoff.
 - `sync_cli.py`: `main` applies yoyo migrations (`migrations/*.sql`), then syncs Garmin, logging to stdout at `SASOI_LOG_LEVEL` (third-party loggers capped at WARNING). Garmin login may prompt for email, password and MFA.
-- `ingest/`: `sync.py` stores only runs not yet stored (latest `SASOI_GARMIN_LIMIT`), so backfill and incremental sync are the same code. Raw payloads go into `jsonb` via `RawStore`.
+- `ingest/`: `sync.py` stores only runs not yet stored (latest `SASOI_GARMIN_LIMIT`), so backfill and incremental sync are the same code. Raw payloads go into `jsonb` via `PostgresRunStore`.
 - `tracing.py`: `TracedClient` and `TracedToolbox` wrap the Claude client and toolbox, writing every call to `traces/<timestamp>.jsonl` via `Tracer`.
 
 ## Testing conventions
 
 - HTTP mocked with `httpx.MockTransport`, never real network.
-- `RawStore` tests run against the `postgres-test` compose service via `TEST_DATABASE_URL` (loaded from `.env` by `tests/conftest.py`); skipped when unset.
+- `PostgresRunStore` tests run against the `postgres-test` compose service via `TEST_DATABASE_URL` (loaded from `.env` by `tests/conftest.py`); skipped when unset.
 - CLI tested via fake agent and injected `read`/`write` (no monkeypatching `input`).
 
 ## Docs

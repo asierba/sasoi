@@ -4,7 +4,7 @@ from psycopg.types.json import Jsonb
 from sasoi.ingest.garmin_types import GarminActivity, GarminSplits
 
 
-class RawStore:
+class PostgresRunStore:
     def __init__(self, conn: psycopg.Connection):
         self._conn = conn
 

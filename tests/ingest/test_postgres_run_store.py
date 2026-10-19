@@ -4,7 +4,7 @@ import psycopg
 import pytest
 
 from sasoi.ingest.garmin_types import GarminActivity, GarminSplits
-from sasoi.ingest.raw_store import RawStore
+from sasoi.ingest.postgres_run_store import PostgresRunStore
 from sasoi.sync_cli import migrate
 
 A_SPLITS: GarminSplits = {"activityId": 0, "lapDTOs": [], "eventDTOs": []}
@@ -23,7 +23,7 @@ def conn():
 
 @pytest.fixture
 def store(conn):
-    return RawStore(conn)
+    return PostgresRunStore(conn)
 
 
 def a_run(activity_id: int) -> GarminActivity:
@@ -43,7 +43,7 @@ def stored_runs(conn) -> list[tuple]:
     return conn.execute("SELECT activity_id, summary, splits FROM garmin_runs ORDER BY activity_id").fetchall()
 
 
-class TestRawStore:
+class TestPostgresRunStore:
     def test_stored_garmin_ids_is_empty_for_an_empty_table(self, store):
         assert store.stored_garmin_ids() == set()
 

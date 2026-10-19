@@ -12,7 +12,7 @@ from yoyo import get_backend, read_migrations
 
 from sasoi.ingest.garmin_login import login as garmin_login
 from sasoi.ingest.garmin_source import MAX_RECENT_RUNS, GarminSource
-from sasoi.ingest.raw_store import RawStore
+from sasoi.ingest.postgres_run_store import PostgresRunStore
 from sasoi.ingest.sync import sync_garmin
 from sasoi.settings import SettingError, required
 
@@ -72,5 +72,5 @@ def main() -> None:
     log.info("garmin sync started, limit %d", config.garmin_limit)
     migrate(config.database_url)
     with psycopg.connect(config.database_url, autocommit=True) as conn:
-        new_runs = sync_garmin(GarminSource(garmin_login()), RawStore(conn), config.garmin_limit)
+        new_runs = sync_garmin(GarminSource(garmin_login()), PostgresRunStore(conn), config.garmin_limit)
     log.info("garmin sync finished: %d new runs in %.0fs", new_runs, time.monotonic() - started)
