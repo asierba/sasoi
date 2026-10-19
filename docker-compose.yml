@@ -1,0 +1,25 @@
+services:
+  postgres:
+    image: postgres:17
+    environment:
+      POSTGRES_USER: sasoi
+      POSTGRES_PASSWORD: sasoi
+      POSTGRES_DB: sasoi
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  postgres-test:
+    image: postgres:17
+    environment:
+      POSTGRES_USER: sasoi
+      POSTGRES_PASSWORD: sasoi
+      POSTGRES_DB: sasoi
+    ports:
+      - "5433:5432"
+    tmpfs:
+      - /var/lib/postgresql/data
+
+volumes:
+  pgdata:
