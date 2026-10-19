@@ -96,7 +96,8 @@ class TestClaudeClient:
 ## Real world examples
 
 - [`Reply` tests and `A_STOP_REASON`](../../tests/test_claude_client.py).
-- [`text_reply`, `FakeClient` and `typed` helpers](../../tests/test_cli.py).
+- [`a_text_reply` builder and `FakeClient`](../../tests/test_agent.py).
+- [`typed` helper](../../tests/test_cli.py).
 - [`an_activity` builder](../../tests/ingest/test_garmin_source.py).
 
 ## Exceptional cases: When to not take into account this convention

@@ -10,7 +10,7 @@ from sasoi.tools.weather_history import weather_history
 AN_INPUT = {"latitude": 43.263, "longitude": -2.935, "start": "2026-10-14T20:00", "end": "2026-10-15T06:00"}
 
 
-def hour_at(time: str) -> WeatherHour:
+def an_hour_at(time: str) -> WeatherHour:
     return WeatherHour(time, 15.9, 15.1, 88, 13.9, 0.2, 7.4)
 
 
@@ -30,10 +30,10 @@ class TestWeatherHistory:
     def test_returns_only_the_requested_hours(self):
         open_meteo = FakeOpenMeteo(
             [
-                hour_at("2026-10-14T19:00"),
-                hour_at("2026-10-14T20:00"),
-                hour_at("2026-10-15T06:00"),
-                hour_at("2026-10-15T07:00"),
+                an_hour_at("2026-10-14T19:00"),
+                an_hour_at("2026-10-14T20:00"),
+                an_hour_at("2026-10-15T06:00"),
+                an_hour_at("2026-10-15T07:00"),
             ]
         )
 

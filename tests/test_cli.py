@@ -10,7 +10,7 @@ A_PROMPT = "a prompt"
 AN_ANSWER_TEXT = "an answer"
 
 
-def answer(text: str) -> Answer:
+def an_answer(text: str) -> Answer:
     return Answer(text, A_USAGE)
 
 
@@ -40,7 +40,7 @@ def typed(*lines: str):
 
 class TestRepl:
     def test_writes_each_answer(self):
-        agent = FakeAgent(answer("Hi!"), answer("You said hello"))
+        agent = FakeAgent(an_answer("Hi!"), an_answer("You said hello"))
         written: list[str] = []
 
         repl(agent, read=typed("hello", "what did I say?"), write=written.append)
@@ -74,7 +74,7 @@ class TestRepl:
         assert agent.prompts == []
 
     def test_shows_api_error_in_red_and_keeps_going(self):
-        agent = FakeAgent(ClaudeApiError(529, "overloaded_error", "Overloaded"), answer("second reply"))
+        agent = FakeAgent(ClaudeApiError(529, "overloaded_error", "Overloaded"), an_answer("second reply"))
         written: list[str] = []
 
         repl(agent, read=typed(A_PROMPT, A_PROMPT), write=written.append)
@@ -83,7 +83,7 @@ class TestRepl:
         assert [error, second_answer] == [f"{RED}Error: 529 overloaded_error: Overloaded{RESET}", "second reply"]
 
     def test_shows_interrupted_in_yellow_on_ctrl_c_and_keeps_going(self):
-        agent = FakeAgent(KeyboardInterrupt(), answer("second reply"))
+        agent = FakeAgent(KeyboardInterrupt(), an_answer("second reply"))
         written: list[str] = []
 
         repl(agent, read=typed(A_PROMPT, A_PROMPT), write=written.append)

@@ -7,7 +7,7 @@ from sasoi.tools.tool import Tool
 from sasoi.tools.toolbox import Toolbox
 
 
-def text_reply(text: str) -> Reply:
+def a_text_reply(text: str) -> Reply:
     return Reply([{"type": "text", "text": text}], "end_turn")
 
 
@@ -31,7 +31,7 @@ A_TOOL_CALL = {"type": "tool_use", "id": "toolu_1", "name": "a_tool", "input": {
 
 class TestAgent:
     def test_sends_history_with_each_prompt(self):
-        client = FakeClient(text_reply("Hi!"), text_reply("You said hello"))
+        client = FakeClient(a_text_reply("Hi!"), a_text_reply("You said hello"))
         agent = Agent(Conversation(), client, Toolbox([]))
 
         answers = [agent.ask("hello"), agent.ask("what did I say?")]
@@ -50,7 +50,7 @@ class TestAgent:
 
     def test_runs_requested_tool_and_sends_result_back(self):
         tool_use = {"type": "tool_use", "id": "toolu_1", "name": "current_time", "input": {}}
-        client = FakeClient(Reply([tool_use], "tool_use"), text_reply("It is 09:00"))
+        client = FakeClient(Reply([tool_use], "tool_use"), a_text_reply("It is 09:00"))
         clock = Tool("current_time", A_DESCRIPTION, AN_INPUT_SCHEMA, lambda _: "09:00")
 
         answer = Agent(Conversation(), client, Toolbox([clock])).ask("what time is it?")
@@ -81,7 +81,7 @@ class TestAgent:
         client = FakeClient(
             Reply([time_call], "tool_use"),
             Reply([calculator_call], "tool_use"),
-            text_reply("45 minutes until 18:00"),
+            a_text_reply("45 minutes until 18:00"),
         )
         clock = Tool("current_time", A_DESCRIPTION, AN_INPUT_SCHEMA, lambda _: "17:15")
         calculator = Tool("calculator", A_DESCRIPTION, AN_INPUT_SCHEMA, lambda _: "45")
