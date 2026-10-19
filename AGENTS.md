@@ -23,6 +23,7 @@ Env: `.env` loaded by `cli.main`; `SASOI_MODEL` picks the model (required, no de
 - `claude_client.py`: raw-HTTP call to the Messages API (no Anthropic SDK, by design). Errors raised as `ClaudeApiError`.
 - `conversation.py`: in-memory message history; `messages` returns a copy.
 - `pricing.py`: per-model `Price` turning a turn's `Usage` into dollars; unknown models show tokens only.
+- `settings.py`: `required` env lookup and `SettingError`; config loaders raise it, each `main` formats it for its output.
 - `retrying.py`: `RetryingClient` wraps the Claude client, retrying connection errors, 429 and 5xx with backoff.
 - `sync_cli.py`: `main` applies yoyo migrations (`migrations/*.sql`), then syncs Garmin, logging to stdout at `SASOI_LOG_LEVEL` (third-party loggers capped at WARNING). Garmin login may prompt for email, password and MFA.
 - `ingest/`: `sync.py` stores only runs not yet stored (latest `SASOI_GARMIN_LIMIT`), so backfill and incremental sync are the same code. Raw payloads go into `jsonb` via `RawStore`.

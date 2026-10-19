@@ -4,6 +4,7 @@ from sasoi.agent import Answer
 from sasoi.claude_client import ClaudeApiError, Usage
 from sasoi.cli import DIM, RED, RESET, YELLOW, Config, load_config, repl
 from sasoi.pricing import Price
+from sasoi.settings import SettingError
 
 A_USAGE = Usage(input_tokens=1, output_tokens=1)
 A_PROMPT = "a prompt"
@@ -95,17 +96,17 @@ class TestRepl:
 
 
 class TestLoadConfig:
-    def test_exits_with_message_when_api_key_missing(self):
-        with pytest.raises(SystemExit) as raised:
+    def test_rejects_with_message_when_api_key_missing(self):
+        with pytest.raises(SettingError) as raised:
             load_config({"SASOI_MODEL": A_MODEL})
 
-        assert raised.value.code == f"{RED}Error: ANTHROPIC_API_KEY is not set{RESET}"
+        assert str(raised.value) == "ANTHROPIC_API_KEY is not set"
 
-    def test_exits_with_message_when_model_missing(self):
-        with pytest.raises(SystemExit) as raised:
+    def test_rejects_with_message_when_model_missing(self):
+        with pytest.raises(SettingError) as raised:
             load_config({"ANTHROPIC_API_KEY": AN_API_KEY})
 
-        assert raised.value.code == f"{RED}Error: SASOI_MODEL is not set{RESET}"
+        assert str(raised.value) == "SASOI_MODEL is not set"
 
     def test_reads_api_key_and_model(self):
         assert load_config({"ANTHROPIC_API_KEY": "key", "SASOI_MODEL": "claude-test"}) == Config("key", "claude-test")

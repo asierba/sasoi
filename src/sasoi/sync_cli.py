@@ -10,11 +10,11 @@ import psycopg
 from dotenv import load_dotenv
 from yoyo import get_backend, read_migrations
 
-from sasoi.cli import RED, RESET
 from sasoi.ingest.garmin_login import login as garmin_login
 from sasoi.ingest.garmin_source import MAX_RECENT_RUNS, GarminSource
 from sasoi.ingest.raw_store import RawStore
 from sasoi.ingest.sync import sync_garmin
+from sasoi.settings import SettingError, required
 
 MIGRATIONS_DIR = Path("migrations")
 LOG_FORMAT = "%(asctime)s %(levelname)s %(name)s: %(message)s"
@@ -30,33 +30,29 @@ class SyncConfig:
 
 
 def load_config(env: Mapping[str, str]) -> SyncConfig:
-    return SyncConfig(_required(env, "DATABASE_URL"), _garmin_limit(env), _log_level(env))
+    return SyncConfig(required(env, "DATABASE_URL"), _garmin_limit(env), _log_level(env))
 
 
 def _garmin_limit(env: Mapping[str, str]) -> int:
-    limit = int(_required(env, "SASOI_GARMIN_LIMIT"))
+    value = required(env, "SASOI_GARMIN_LIMIT")
+    if not value.isdigit():
+        raise SettingError(f"SASOI_GARMIN_LIMIT {value} is not a whole number")
+    limit = int(value)
     if limit > MAX_RECENT_RUNS:
-        raise SystemExit(f"{RED}Error: SASOI_GARMIN_LIMIT cannot exceed {MAX_RECENT_RUNS}{RESET}")
+        raise SettingError(f"SASOI_GARMIN_LIMIT cannot exceed {MAX_RECENT_RUNS}")
     return limit
 
 
 def _log_level(env: Mapping[str, str]) -> str:
-    level = _required(env, "SASOI_LOG_LEVEL")
+    level = required(env, "SASOI_LOG_LEVEL")
     if level not in logging.getLevelNamesMapping():
-        raise SystemExit(f"{RED}Error: SASOI_LOG_LEVEL {level} is not a logging level{RESET}")
+        raise SettingError(f"SASOI_LOG_LEVEL {level} is not a logging level")
     return level
 
 
 def configure_logging(level: str) -> None:
     logging.basicConfig(level=logging.WARNING, format=LOG_FORMAT, stream=sys.stdout)
     logging.getLogger("sasoi").setLevel(level)
-
-
-def _required(env: Mapping[str, str], name: str) -> str:
-    value = env.get(name)
-    if not value:
-        raise SystemExit(f"{RED}Error: {name} is not set{RESET}")
-    return value
 
 
 def migrate(database_url: str) -> None:
@@ -67,7 +63,10 @@ def migrate(database_url: str) -> None:
 
 def main() -> None:
     load_dotenv(".env")
-    config = load_config(os.environ)
+    try:
+        config = load_config(os.environ)
+    except SettingError as error:
+        raise SystemExit(f"Error: {error}") from error
     configure_logging(config.log_level)
     started = time.monotonic()
     log.info("garmin sync started, limit %d", config.garmin_limit)

@@ -15,6 +15,7 @@ from sasoi.conversation import Conversation
 from sasoi.open_meteo_client import OpenMeteoClient
 from sasoi.pricing import PRICES, Price
 from sasoi.retrying import RetryingClient
+from sasoi.settings import SettingError, required
 from sasoi.tools.current_time import current_time
 from sasoi.tools.geocode import geocode
 from sasoi.tools.toolbox import Toolbox
@@ -39,19 +40,15 @@ class Config:
 
 
 def load_config(env: Mapping[str, str]) -> Config:
-    return Config(_required(env, "ANTHROPIC_API_KEY"), _required(env, "SASOI_MODEL"))
-
-
-def _required(env: Mapping[str, str], name: str) -> str:
-    value = env.get(name)
-    if not value:
-        raise SystemExit(f"{RED}Error: {name} is not set{RESET}")
-    return value
+    return Config(required(env, "ANTHROPIC_API_KEY"), required(env, "SASOI_MODEL"))
 
 
 def main() -> None:
     load_dotenv(".env")
-    config = load_config(os.environ)
+    try:
+        config = load_config(os.environ)
+    except SettingError as error:
+        raise SystemExit(f"{RED}Error: {error}{RESET}") from error
     TRACES_DIR.mkdir(exist_ok=True)
     trace_path = TRACES_DIR / f"{datetime.now():%Y%m%d-%H%M%S}.jsonl"
     with httpx.Client(timeout=60, trust_env=False) as http, trace_path.open("w") as trace_file:
