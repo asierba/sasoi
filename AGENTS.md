@@ -26,7 +26,7 @@ Env: `.env` loaded by `cli.main`; `SASOI_MODEL` picks the model (required, no de
 - `settings.py`: `required` env lookup and `SettingError`; config loaders raise it, each `main` formats it for its output.
 - `retrying.py`: `RetryingClient` wraps the Claude client, retrying connection errors, 429 and 5xx with backoff.
 - `sync_cli.py`: `main` applies yoyo migrations (`migrations/*.sql`), then syncs Garmin, logging to stdout at `SASOI_LOG_LEVEL` (third-party loggers capped at WARNING). Garmin login may prompt for email, password and MFA.
-- `ingest/`: `sync.py` stores only runs not yet stored (latest `SASOI_GARMIN_LIMIT`), so backfill and incremental sync are the same code. Raw payloads go into `jsonb` via `PostgresRunStore`.
+- `ingest/`: `sync.py` stores only runs not yet stored (latest `SASOI_GARMIN_LIMIT`), so backfill and incremental sync are the same code. `GarminSource` maps API payloads (`garmin_types.py`) to `Run`/`Lap` (`runs.py`) via `garmin_mapping.py`, an allow-list: fields not mapped are never stored. `PostgresRunStore` writes typed rows.
 - `tracing.py`: `TracedClient` and `TracedToolbox` wrap the Claude client and toolbox, writing every call to `traces/<timestamp>.jsonl` via `Tracer`.
 
 ## Testing conventions

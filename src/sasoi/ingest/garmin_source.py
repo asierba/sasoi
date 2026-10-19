@@ -1,6 +1,8 @@
 from typing import Any, Protocol, cast
 
+from sasoi.ingest.garmin_mapping import to_lap, to_run
 from sasoi.ingest.garmin_types import GarminActivity, GarminSplits
+from sasoi.ingest.runs import Lap, Run
 
 # garminconnect rejects get_activities calls asking for more than 1000 activities.
 # A single call keeps recent_runs simple. Syncing more runs needs a code change, not just
@@ -18,8 +20,10 @@ class GarminSource:
     def __init__(self, api: GarminApi):
         self._api = api
 
-    def recent_runs(self, limit: int) -> list[GarminActivity]:
-        return cast(list[GarminActivity], self._api.get_activities(0, limit, "running"))
+    def recent_runs(self, limit: int) -> list[Run]:
+        activities = cast(list[GarminActivity], self._api.get_activities(0, limit, "running"))
+        return [to_run(activity) for activity in activities]
 
-    def splits(self, activity_id: int) -> GarminSplits:
-        return cast(GarminSplits, self._api.get_activity_splits(str(activity_id)))
+    def laps(self, activity_id: int) -> list[Lap]:
+        splits = cast(GarminSplits, self._api.get_activity_splits(str(activity_id)))
+        return [to_lap(lap) for lap in splits["lapDTOs"]]
