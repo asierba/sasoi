@@ -14,7 +14,7 @@ uv run pytest tests/test_cli.py::TestRepl::test_skips_empty_prompts   # single t
 scripts/trace.sh [--full] [trace.jsonl]   # follow latest trace; --full skips truncating tool results
 ```
 
-Env: `.env` loaded by `cli.main`; `SASOI_MODEL` overrides the default model.
+Env: `.env` loaded by `cli.main`; `SASOI_MODEL` picks the model (required, no default in code).
 
 ## Architecture
 

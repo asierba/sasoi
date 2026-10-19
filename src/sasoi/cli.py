@@ -21,7 +21,6 @@ from sasoi.tools.toolbox import Toolbox
 from sasoi.tools.weather_history import weather_history
 from sasoi.tracing import TracedClient, TracedSleep, TracedToolbox, Tracer
 
-DEFAULT_MODEL = "claude-haiku-5-5"
 TRACES_DIR = Path("traces")
 RED = "\033[31m"
 YELLOW = "\033[33m"
@@ -40,10 +39,14 @@ class Config:
 
 
 def load_config(env: Mapping[str, str]) -> Config:
-    api_key = env.get("ANTHROPIC_API_KEY")
-    if not api_key:
-        raise SystemExit(f"{RED}Error: ANTHROPIC_API_KEY is not set{RESET}")
-    return Config(api_key, env.get("SASOI_MODEL", DEFAULT_MODEL))
+    return Config(_required(env, "ANTHROPIC_API_KEY"), _required(env, "SASOI_MODEL"))
+
+
+def _required(env: Mapping[str, str], name: str) -> str:
+    value = env.get(name)
+    if not value:
+        raise SystemExit(f"{RED}Error: {name} is not set{RESET}")
+    return value
 
 
 def main() -> None:
