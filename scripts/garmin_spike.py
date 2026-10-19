@@ -1,3 +1,7 @@
+#!/usr/bin/env -S uv run --script
+# /// script
+# dependencies = ["garminconnect"]
+# ///
 import json
 from getpass import getpass
 from pathlib import Path
