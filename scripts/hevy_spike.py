@@ -10,17 +10,18 @@ import httpx
 from dotenv import load_dotenv
 
 OUT = Path("data/hevy/workouts.json")
+API = "https://api.hevyapp.com"
+HEADERS = {"x-api-key": "shelobs_hevy_web", "hevy-platform": "web"}
+
+
+def login():
+    credentials = {"emailOrUsername": os.environ["HEVY_EMAIL"], "password": os.environ["HEVY_PASSWORD"]}
+    response = httpx.post(f"{API}/login", headers=HEADERS, json=credentials).raise_for_status()
+    return response.json()["auth_token"]
 
 
 def client():
-    return httpx.Client(
-        base_url="https://api.hevyapp.com",
-        headers={
-            "authorization": f"Bearer {os.environ['HEVY_AUTH_TOKEN']}",
-            "x-api-key": "shelobs_hevy_web",
-            "hevy-platform": "web",
-        },
-    )
+    return httpx.Client(base_url=API, headers={**HEADERS, "authorization": f"Bearer {login()}"})
 
 
 def fetch_all(http):
