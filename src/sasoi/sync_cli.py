@@ -38,8 +38,8 @@ def _garmin_limit(env: Mapping[str, str]) -> int:
     if not value.isdigit():
         raise SettingError(f"SASOI_GARMIN_LIMIT {value} is not a whole number")
     limit = int(value)
-    if limit > MAX_RECENT_RUNS:
-        raise SettingError(f"SASOI_GARMIN_LIMIT cannot exceed {MAX_RECENT_RUNS}")
+    if not 1 <= limit <= MAX_RECENT_RUNS:
+        raise SettingError(f"SASOI_GARMIN_LIMIT {limit} must be between 1 and {MAX_RECENT_RUNS}")
     return limit
 
 

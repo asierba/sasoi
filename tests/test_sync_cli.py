@@ -33,11 +33,17 @@ class TestLoadConfig:
 
         assert config.garmin_limit == 1000
 
-    def test_rejects_when_garmin_limit_exceeds_1000(self):
+    def test_rejects_a_garmin_limit_above_1000(self):
         with pytest.raises(SettingError) as raised:
             load_config({"DATABASE_URL": A_DATABASE_URL, "SASOI_GARMIN_LIMIT": "1001", "SASOI_LOG_LEVEL": A_LOG_LEVEL})
 
-        assert str(raised.value) == "SASOI_GARMIN_LIMIT cannot exceed 1000"
+        assert str(raised.value) == "SASOI_GARMIN_LIMIT 1001 must be between 1 and 1000"
+
+    def test_rejects_a_garmin_limit_of_0(self):
+        with pytest.raises(SettingError) as raised:
+            load_config({"DATABASE_URL": A_DATABASE_URL, "SASOI_GARMIN_LIMIT": "0", "SASOI_LOG_LEVEL": A_LOG_LEVEL})
+
+        assert str(raised.value) == "SASOI_GARMIN_LIMIT 0 must be between 1 and 1000"
 
     def test_rejects_when_garmin_limit_is_not_a_whole_number(self):
         with pytest.raises(SettingError) as raised:
