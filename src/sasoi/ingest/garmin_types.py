@@ -1,4 +1,4 @@
-from typing import Any, TypedDict
+from typing import Any, NotRequired, TypedDict
 
 
 class ActivityType(TypedDict):
@@ -7,7 +7,9 @@ class ActivityType(TypedDict):
 
 class GarminActivity(TypedDict):
     activityId: int
+    activityName: NotRequired[str]
     activityType: ActivityType
+    startTimeLocal: str
 
 
 class GarminSplits(TypedDict):

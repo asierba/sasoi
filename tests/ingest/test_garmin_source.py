@@ -18,7 +18,12 @@ class FakeGarminApi:
 
 
 def an_activity(activity_id: int, type_key: str) -> GarminActivity:
-    return {"activityId": activity_id, "activityType": {"typeKey": type_key}}
+    return {
+        "activityId": activity_id,
+        "activityName": "Morning Run",
+        "activityType": {"typeKey": type_key},
+        "startTimeLocal": "2024-01-02 07:00:00",
+    }
 
 
 class TestGarminSource:

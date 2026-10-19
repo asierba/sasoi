@@ -1,4 +1,7 @@
+import logging
 import os
+import sys
+import time
 from collections.abc import Mapping
 from dataclasses import dataclass
 from pathlib import Path
@@ -14,16 +17,20 @@ from sasoi.ingest.raw_store import RawStore
 from sasoi.ingest.sync import sync_garmin
 
 MIGRATIONS_DIR = Path("migrations")
+LOG_FORMAT = "%(asctime)s %(levelname)s %(name)s: %(message)s"
+
+log = logging.getLogger(__name__)
 
 
 @dataclass(frozen=True)
 class SyncConfig:
     database_url: str
     garmin_limit: int
+    log_level: str
 
 
 def load_config(env: Mapping[str, str]) -> SyncConfig:
-    return SyncConfig(_required(env, "DATABASE_URL"), _garmin_limit(env))
+    return SyncConfig(_required(env, "DATABASE_URL"), _garmin_limit(env), _log_level(env))
 
 
 def _garmin_limit(env: Mapping[str, str]) -> int:
@@ -31,6 +38,18 @@ def _garmin_limit(env: Mapping[str, str]) -> int:
     if limit > MAX_RECENT_RUNS:
         raise SystemExit(f"{RED}Error: SASOI_GARMIN_LIMIT cannot exceed {MAX_RECENT_RUNS}{RESET}")
     return limit
+
+
+def _log_level(env: Mapping[str, str]) -> str:
+    level = _required(env, "SASOI_LOG_LEVEL")
+    if level not in logging.getLevelNamesMapping():
+        raise SystemExit(f"{RED}Error: SASOI_LOG_LEVEL {level} is not a logging level{RESET}")
+    return level
+
+
+def configure_logging(level: str) -> None:
+    logging.basicConfig(level=logging.WARNING, format=LOG_FORMAT, stream=sys.stdout)
+    logging.getLogger("sasoi").setLevel(level)
 
 
 def _required(env: Mapping[str, str], name: str) -> str:
@@ -49,7 +68,10 @@ def migrate(database_url: str) -> None:
 def main() -> None:
     load_dotenv(".env")
     config = load_config(os.environ)
+    configure_logging(config.log_level)
+    started = time.monotonic()
+    log.info("garmin sync started, limit %d", config.garmin_limit)
     migrate(config.database_url)
     with psycopg.connect(config.database_url, autocommit=True) as conn:
         new_runs = sync_garmin(GarminSource(garmin_login()), RawStore(conn), config.garmin_limit)
-        print(f"garmin: {new_runs} new runs")
+    log.info("garmin sync finished: %d new runs in %.0fs", new_runs, time.monotonic() - started)

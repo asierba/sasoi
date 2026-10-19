@@ -27,7 +27,12 @@ def store(conn):
 
 
 def a_run(activity_id: int) -> GarminActivity:
-    return {"activityId": activity_id, "activityType": {"typeKey": "running"}}
+    return {
+        "activityId": activity_id,
+        "activityName": "Morning Run",
+        "activityType": {"typeKey": "running"},
+        "startTimeLocal": "2024-01-02 07:00:00",
+    }
 
 
 def a_splits(activity_id: int, laps: list[dict]) -> GarminSplits:

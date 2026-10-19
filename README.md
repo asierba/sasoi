@@ -28,7 +28,7 @@ uv run sasoi-sync
 
 Applies database migrations, then stores the latest Garmin runs (with laps) in Postgres as raw JSON. Only runs not already stored are fetched, so the first run fills a fresh database and later runs pick up new sessions.
 
-Set `SASOI_GARMIN_LIMIT` in `.env` to change how many recent Garmin runs are kept. The first Garmin login asks for email, password and MFA code; the token is saved in `~/.garminconnect` and reused.
+Set `SASOI_GARMIN_LIMIT` in `.env` to change how many recent Garmin runs are kept. Progress is logged to stdout at `SASOI_LOG_LEVEL`; other libraries only log warnings. The first Garmin login asks for email, password and MFA code; the token is saved in `~/.garminconnect` and reused.
 
 ## Tests
 
