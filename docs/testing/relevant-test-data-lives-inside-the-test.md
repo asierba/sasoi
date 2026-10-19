@@ -2,13 +2,14 @@
 
 ## Convention
 
-Every value that drives the behaviour under test or appears in the assertion is written inside the test body. A value the code requires but the test does not care about goes in a constant prefixed with `A_` or `AN_`, defined next to the tests that use it.
+Every value that drives the behaviour under test or appears in the assertion is written inside the test body. A value the code requires but the test does not care about goes in a constant prefixed with `A_` or `AN_`, defined next to the tests that use it. A function that builds test data is prefixed with `a_` or `an_` and takes the relevant values as arguments, so they stay visible at the call site.
 
 ## Benefits
 
 - A test reads top to bottom without scrolling elsewhere in the file.
 - The reader sees at once which inputs explain the expected result.
 - The `A_` prefix states that any value would do, so the reader can skip it.
+- The `a_` prefix on a builder reads as a sentence and states that only its arguments matter.
 
 ## Examples
 
@@ -33,6 +34,27 @@ class TestReply:
         reply = Reply([{"type": "text", "text": "Let me check"}, {"type": "tool_use"}], A_STOP_REASON)
 
         assert reply.text == "Let me check"
+```
+
+### Good: builder named as any, relevant values passed in
+
+```python
+def an_activity(activity_id: int, type_key: str) -> dict:
+    return {"activityId": activity_id, "activityType": {"typeKey": type_key}}
+
+
+class TestGarminSource:
+    def test_recent_runs_returns_only_runs(self):
+        api = FakeGarminApi([an_activity(2, "running"), an_activity(1, "cycling")])
+
+        assert GarminSource(api).recent_runs(10) == [an_activity(2, "running")]
+```
+
+### Bad: builder named like a domain function
+
+```python
+def activity(activity_id: int, type_key: str) -> dict:
+    return {"activityId": activity_id, "activityType": {"typeKey": type_key}}
 ```
 
 ### Bad: asserted values defined away from the test
@@ -75,6 +97,7 @@ class TestClaudeClient:
 
 - [`Reply` tests and `A_STOP_REASON`](../../tests/test_claude_client.py).
 - [`text_reply`, `FakeClient` and `typed` helpers](../../tests/test_cli.py).
+- [`an_activity` builder](../../tests/ingest/test_garmin_source.py).
 
 ## Exceptional cases: When to not take into account this convention
 
