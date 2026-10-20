@@ -4,7 +4,7 @@ from collections.abc import Callable, Mapping
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
-from typing import Protocol
+from typing import Protocol, TextIO
 
 import httpx
 from dotenv import load_dotenv
@@ -46,22 +46,37 @@ def load_config(env: Mapping[str, str]) -> Config:
 
 def main() -> None:
     load_dotenv(".env")
-    try:
-        config = load_config(os.environ)
-    except SettingError as error:
-        raise SystemExit(f"{RED}Error: {error}{RESET}") from error
-    TRACES_DIR.mkdir(exist_ok=True)
-    trace_path = TRACES_DIR / f"{datetime.now():%Y%m%d-%H%M%S}.jsonl"
-    with httpx.Client(timeout=60, trust_env=False) as http, trace_path.open("w") as trace_file:
+    config = _config()
+    with httpx.Client(timeout=60, trust_env=False) as http, _trace_file() as trace_file:
         tracer = Tracer(trace_file)
         tracer.record({"type": "session", "model": config.model, "max_tokens": MAX_TOKENS})
-        client = RetryingClient(
-            TracedClient(ClaudeClient(config.api_key, config.model, http), tracer),
-            sleep=TracedSleep(time.sleep, tracer),
-        )
-        open_meteo = OpenMeteoClient(http)
-        toolbox = TracedToolbox(Toolbox([current_time, geocode(open_meteo), weather_history(open_meteo)]), tracer)
-        repl(Agent(Conversation(), client, toolbox, system_prompt()), PRICES.get(config.model))
+        repl(_agent(config, http, tracer), PRICES.get(config.model))
+
+
+def _config() -> Config:
+    try:
+        return load_config(os.environ)
+    except SettingError as error:
+        raise SystemExit(f"{RED}Error: {error}{RESET}") from error
+
+
+def _trace_file() -> TextIO:
+    TRACES_DIR.mkdir(exist_ok=True)
+    return (TRACES_DIR / f"{datetime.now():%Y%m%d-%H%M%S}.jsonl").open("w")
+
+
+def _agent(config: Config, http: httpx.Client, tracer: Tracer) -> Agent:
+    client = RetryingClient(
+        TracedClient(ClaudeClient(config.api_key, config.model, http), tracer),
+        sleep=TracedSleep(time.sleep, tracer),
+    )
+    toolbox = TracedToolbox(_toolbox(http), tracer)
+    return Agent(Conversation(), client, toolbox, system_prompt())
+
+
+def _toolbox(http: httpx.Client) -> Toolbox:
+    open_meteo = OpenMeteoClient(http)
+    return Toolbox([current_time, geocode(open_meteo), weather_history(open_meteo)])
 
 
 def usage_line(answer: Answer, price: Price | None) -> str:
