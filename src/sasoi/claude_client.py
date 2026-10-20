@@ -4,7 +4,7 @@ import httpx
 
 MESSAGES_URL = "https://api.anthropic.com/v1/messages"
 API_VERSION = "2023-06-01"
-MAX_TOKENS = 1024
+MAX_TOKENS = 8192
 
 
 class ClaudeError(Exception):

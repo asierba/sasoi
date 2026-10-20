@@ -39,7 +39,7 @@ class TestClaudeClient:
         assert request.headers["anthropic-version"] == "2023-06-01"
         assert json.loads(request.content) == {
             "model": "test-model",
-            "max_tokens": 1024,
+            "max_tokens": 8192,
             "system": "Today is Tuesday.",
             "messages": [{"role": "user", "content": "hi"}],
             "tools": [],
