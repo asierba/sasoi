@@ -124,6 +124,7 @@ Phase 0 runs on the laptop; by the end of phase 1 the same containers move to an
 - Feedback evals: numbers checked by code, usefulness and tone scored by an LLM judge
 - Dockerfile and a compose service for the app, then move to the always-on host, with images built for both amd64 and arm64 so the app runs on an x86 or ARM VPS and later on a Raspberry Pi
 - Garmin login without interaction (no MFA prompt) on the host
+- Database passwords (owner and `sasoi_reader`) set from secrets on the host, not hardcoded in the compose file and migrations
 - Tracing tool with a browser UI, replacing the JSONL traces (see open decisions)
 
 **Ships:** feedback in my inbox after every run.
