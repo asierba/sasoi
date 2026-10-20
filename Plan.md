@@ -100,7 +100,7 @@ Phase 0 runs on the laptop; by the end of phase 1 the same containers move to an
   - [x] ~~Check whether Hevy workouts also reach Garmin Connect: no native sync, as Garmin refused Hevy API access; third-party sync (hevy2garmin) needs Hevy Pro, which would give direct API access anyway~~
 - [ ] Garmin foundation: the full path from ingestion to evals for runs first
   - [x] ~~Ingestion: latest runs with laps pulled into Postgres~~
-  - [ ] Data tools: add a read-only `run_sql` tool and the schema description to the loop
+  - [x] ~~Data tools: add a read-only `run_sql` tool and the schema description to the loop~~
   - [ ] First evals: 15–20 real questions about runs, each with a hand-written SQL query as ground truth; run the agent and read every trace
   - [ ] Two eval datasets: a frozen, gitignored snapshot of my data, and a small synthetic set in the repo for CI and demos
 - [ ] Hevy foundation: the same path for strength, on top of the Garmin one
