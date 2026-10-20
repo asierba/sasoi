@@ -40,3 +40,4 @@ Env: `.env` loaded by `cli.main`; `SASOI_MODEL` picks the model (required, no de
 - [Testing: Relevant test data lives inside the test](docs/testing/relevant-test-data-lives-inside-the-test.md).
 - [Testing: Assertions state exactly what the test claims](docs/testing/assertions-state-exactly-what-the-test-claims.md).
 - [Config: No defaults in code, only in .env.example](docs/config/no-defaults-in-code-only-in-env-example.md).
+- [Code: Small functions that do one thing](docs/code/small-functions-that-do-one-thing.md).
