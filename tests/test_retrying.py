@@ -4,7 +4,7 @@ from sasoi.claude_client import ClaudeApiError, ClaudeConnectionError, Reply, Re
 from sasoi.retrying import RetryingClient
 
 A_REPLY = Reply([{"type": "text", "text": "Hi!"}], "end_turn")
-A_REQUEST = Request([{"role": "user", "content": "hello"}], [])
+A_REQUEST = Request("a system prompt", [{"role": "user", "content": "hello"}], [])
 AN_ERROR_TYPE = "an_error"
 AN_ERROR_MESSAGE = "Something went wrong"
 

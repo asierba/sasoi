@@ -16,6 +16,7 @@ from sasoi.open_meteo_client import OpenMeteoClient
 from sasoi.pricing import PRICES, Price
 from sasoi.retrying import RetryingClient
 from sasoi.settings import SettingError, required
+from sasoi.system_prompt import system_prompt
 from sasoi.tools.current_time import current_time
 from sasoi.tools.geocode import geocode
 from sasoi.tools.toolbox import Toolbox
@@ -60,7 +61,7 @@ def main() -> None:
         )
         open_meteo = OpenMeteoClient(http)
         toolbox = TracedToolbox(Toolbox([current_time, geocode(open_meteo), weather_history(open_meteo)]), tracer)
-        repl(Agent(Conversation(), client, toolbox), PRICES.get(config.model))
+        repl(Agent(Conversation(), client, toolbox, system_prompt()), PRICES.get(config.model))
 
 
 def usage_line(answer: Answer, price: Price | None) -> str:

@@ -45,6 +45,7 @@ class Usage:
 
 @dataclass(frozen=True)
 class Request:
+    system: str
     messages: list[dict]
     tools: list[dict]
 

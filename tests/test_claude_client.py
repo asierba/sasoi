@@ -9,7 +9,8 @@ from sasoi.claude_client import ClaudeApiError, ClaudeClient, ClaudeConnectionEr
 A_KEY = "test-key"
 A_MODEL = "test-model"
 A_MESSAGES = [{"role": "user", "content": "hi"}]
-A_REQUEST = Request(A_MESSAGES, [])
+A_SYSTEM = "a system prompt"
+A_REQUEST = Request(A_SYSTEM, A_MESSAGES, [])
 A_USAGE = {"input_tokens": 1, "output_tokens": 1}
 
 
@@ -30,7 +31,7 @@ class TestClaudeClient:
 
         http = httpx.Client(transport=httpx.MockTransport(handler))
 
-        reply = ClaudeClient("test-key", "test-model", http).send(Request([{"role": "user", "content": "hi"}], []))
+        reply = ClaudeClient("test-key", "test-model", http).send(Request("Today is Tuesday.", [{"role": "user", "content": "hi"}], []))
 
         request = captured["request"]
         assert str(request.url) == "https://api.anthropic.com/v1/messages"
@@ -39,6 +40,7 @@ class TestClaudeClient:
         assert json.loads(request.content) == {
             "model": "test-model",
             "max_tokens": 1024,
+            "system": "Today is Tuesday.",
             "messages": [{"role": "user", "content": "hi"}],
             "tools": [],
         }
@@ -56,7 +58,7 @@ class TestClaudeClient:
 
         http = httpx.Client(transport=httpx.MockTransport(handler))
 
-        reply = ClaudeClient(A_KEY, A_MODEL, http).send(Request(A_MESSAGES, tools))
+        reply = ClaudeClient(A_KEY, A_MODEL, http).send(Request(A_SYSTEM, A_MESSAGES, tools))
 
         assert json.loads(captured["request"].content)["tools"] == tools
         assert reply.content == [tool_use]

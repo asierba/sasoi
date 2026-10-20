@@ -15,15 +15,18 @@ class FakeClient:
     def __init__(self, *replies: Reply):
         self._replies = list(replies)
         self.calls: list[list[dict]] = []
+        self.systems: list[str] = []
 
     def send(self, request: Request) -> Reply:
         self.calls.append(request.messages)
+        self.systems.append(request.system)
         return self._replies.pop(0)
 
 
 A_DESCRIPTION = "Does something"
 AN_INPUT_SCHEMA = {"type": "object"}
 A_PROMPT = "a prompt"
+A_SYSTEM_PROMPT = "a system prompt"
 A_TEXT_CONTENT = [{"type": "text", "text": "a reply"}]
 A_TOOL = Tool("a_tool", A_DESCRIPTION, AN_INPUT_SCHEMA, lambda _: "a result")
 A_TOOL_CALL = {"type": "tool_use", "id": "toolu_1", "name": "a_tool", "input": {}}
@@ -32,7 +35,7 @@ A_TOOL_CALL = {"type": "tool_use", "id": "toolu_1", "name": "a_tool", "input": {
 class TestAgent:
     def test_sends_history_with_each_prompt(self):
         client = FakeClient(a_text_reply("Hi!"), a_text_reply("You said hello"))
-        agent = Agent(Conversation(), client, Toolbox([]))
+        agent = Agent(Conversation(), client, Toolbox([]), A_SYSTEM_PROMPT)
 
         answers = [agent.ask("hello"), agent.ask("what did I say?")]
 
@@ -53,7 +56,7 @@ class TestAgent:
         client = FakeClient(Reply([tool_use], "tool_use"), a_text_reply("It is 09:00"))
         clock = Tool("current_time", A_DESCRIPTION, AN_INPUT_SCHEMA, lambda _: "09:00")
 
-        answer = Agent(Conversation(), client, Toolbox([clock])).ask("what time is it?")
+        answer = Agent(Conversation(), client, Toolbox([clock]), A_SYSTEM_PROMPT).ask("what time is it?")
 
         assert client.calls == [
             [
@@ -86,7 +89,7 @@ class TestAgent:
         clock = Tool("current_time", A_DESCRIPTION, AN_INPUT_SCHEMA, lambda _: "17:15")
         calculator = Tool("calculator", A_DESCRIPTION, AN_INPUT_SCHEMA, lambda _: "45")
 
-        agent = Agent(Conversation(), client, Toolbox([clock, calculator]))
+        agent = Agent(Conversation(), client, Toolbox([clock, calculator]), A_SYSTEM_PROMPT)
 
         answer = agent.ask("how many minutes until 18:00?")
 
@@ -115,7 +118,7 @@ class TestAgent:
     def test_returns_text_when_stopped_by_stop_sequence(self):
         client = FakeClient(Reply([{"type": "text", "text": "Done"}], "stop_sequence"))
 
-        answer = Agent(Conversation(), client, Toolbox([])).ask(A_PROMPT)
+        answer = Agent(Conversation(), client, Toolbox([]), A_SYSTEM_PROMPT).ask(A_PROMPT)
 
         assert answer.text == "Done"
 
@@ -124,11 +127,11 @@ class TestAgent:
         client = FakeClient(Reply(A_TEXT_CONTENT, stop_reason))
 
         with pytest.raises(UnexpectedStopError, match=f"reply stopped with {stop_reason}"):
-            Agent(Conversation(), client, Toolbox([])).ask(A_PROMPT)
+            Agent(Conversation(), client, Toolbox([]), A_SYSTEM_PROMPT).ask(A_PROMPT)
 
     def test_keeps_unexpected_reply_out_of_history(self):
         client = FakeClient(Reply(A_TEXT_CONTENT, "max_tokens"), Reply(A_TEXT_CONTENT, "end_turn"))
-        agent = Agent(Conversation(), client, Toolbox([]))
+        agent = Agent(Conversation(), client, Toolbox([]), A_SYSTEM_PROMPT)
 
         with pytest.raises(UnexpectedStopError):
             agent.ask("first")
@@ -146,6 +149,13 @@ class TestAgent:
             Reply(A_TEXT_CONTENT, "end_turn", Usage(input_tokens=150, output_tokens=10)),
         )
 
-        answer = Agent(Conversation(), client, Toolbox([A_TOOL])).ask(A_PROMPT)
+        answer = Agent(Conversation(), client, Toolbox([A_TOOL]), A_SYSTEM_PROMPT).ask(A_PROMPT)
 
         assert answer.usage == Usage(input_tokens=250, output_tokens=30)
+
+    def test_sends_the_system_prompt_with_every_call(self):
+        client = FakeClient(Reply([A_TOOL_CALL], "tool_use"), a_text_reply("done"))
+
+        Agent(Conversation(), client, Toolbox([A_TOOL]), "Today is Tuesday.").ask(A_PROMPT)
+
+        assert client.systems == ["Today is Tuesday.", "Today is Tuesday."]

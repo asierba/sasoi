@@ -32,10 +32,11 @@ class Tools(Protocol):
 
 
 class Agent:
-    def __init__(self, conversation: Conversation, client: ChatClient, toolbox: Tools):
+    def __init__(self, conversation: Conversation, client: ChatClient, toolbox: Tools, system_prompt: str):
         self._conversation = conversation
         self._client = client
         self._toolbox = toolbox
+        self._system_prompt = system_prompt
 
     def ask(self, prompt: str) -> Answer:
         self._conversation.add_user_message(prompt)
@@ -52,4 +53,4 @@ class Agent:
         return Answer(reply.text, usage)
 
     def _send(self) -> Reply:
-        return self._client.send(Request(self._conversation.messages, self._toolbox.definitions))
+        return self._client.send(Request(self._system_prompt, self._conversation.messages, self._toolbox.definitions))

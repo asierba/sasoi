@@ -30,7 +30,7 @@ def recorded(sink: io.StringIO) -> list[dict]:
 A_TIMER_READING = 0.0
 A_DESCRIPTION = "Does something"
 AN_INPUT_SCHEMA = {"type": "object"}
-A_REQUEST = Request([{"role": "user", "content": "hello"}], [])
+A_REQUEST = Request("a system prompt", [{"role": "user", "content": "hello"}], [])
 AN_ERROR_TYPE = "an_error"
 AN_ERROR_MESSAGE = "Something went wrong"
 A_TOOL = Tool("a_tool", A_DESCRIPTION, AN_INPUT_SCHEMA, lambda _: "a result")
@@ -53,12 +53,13 @@ class TestTracedClient:
         reply = Reply([{"type": "text", "text": "Hi!"}], "end_turn", Usage(input_tokens=12, output_tokens=5))
         client = TracedClient(FakeClient(reply), Tracer(sink), timer(1.0, 1.25))
 
-        returned = client.send(Request([{"role": "user", "content": "hello"}], [{"name": "current_time"}]))
+        returned = client.send(Request("Today is Tuesday.", [{"role": "user", "content": "hello"}], [{"name": "current_time"}]))
 
         assert returned == reply
         assert recorded(sink) == [
             {
                 "type": "claude_call",
+                "system": "Today is Tuesday.",
                 "messages": [{"role": "user", "content": "hello"}],
                 "tools": [{"name": "current_time"}],
                 "content": [{"type": "text", "text": "Hi!"}],

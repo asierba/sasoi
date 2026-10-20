@@ -17,7 +17,10 @@ sasoi = "sasoi.cli:main"
 sasoi-sync = "sasoi.sync_cli:main"
 
 [dependency-groups]
-dev = ["pytest>=8"]
+dev = [
+    "pytest>=8",
+    "time-machine>=3.5.1",
+]
 
 [build-system]
 requires = ["hatchling"]
