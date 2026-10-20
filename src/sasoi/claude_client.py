@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass
 
 import httpx
 
@@ -44,6 +44,12 @@ class Usage:
 
 
 @dataclass(frozen=True)
+class Request:
+    messages: list[dict]
+    tools: list[dict]
+
+
+@dataclass(frozen=True)
 class Reply:
     content: list[dict]
     stop_reason: str
@@ -64,7 +70,7 @@ class ClaudeClient:
         self._model = model
         self._http = http
 
-    def send(self, messages: list[dict], tools: list[dict]) -> Reply:
+    def send(self, request: Request) -> Reply:
         try:
             response = self._http.post(
                 MESSAGES_URL,
@@ -73,12 +79,7 @@ class ClaudeClient:
                     "anthropic-version": API_VERSION,
                     "content-type": "application/json",
                 },
-                json={
-                    "model": self._model,
-                    "max_tokens": MAX_TOKENS,
-                    "messages": messages,
-                    "tools": tools,
-                },
+                json={"model": self._model, "max_tokens": MAX_TOKENS, **asdict(request)},
             )
         except httpx.TransportError as error:
             raise ClaudeConnectionError(f"connection failed: {error}") from error

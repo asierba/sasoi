@@ -1,7 +1,7 @@
 import pytest
 
 from sasoi.agent import Agent, UnexpectedStopError
-from sasoi.claude_client import Reply, Usage
+from sasoi.claude_client import Reply, Request, Usage
 from sasoi.conversation import Conversation
 from sasoi.tools.tool import Tool
 from sasoi.tools.toolbox import Toolbox
@@ -16,8 +16,8 @@ class FakeClient:
         self._replies = list(replies)
         self.calls: list[list[dict]] = []
 
-    def send(self, messages: list[dict], tools: list[dict]) -> Reply:
-        self.calls.append(messages)
+    def send(self, request: Request) -> Reply:
+        self.calls.append(request.messages)
         return self._replies.pop(0)
 
 

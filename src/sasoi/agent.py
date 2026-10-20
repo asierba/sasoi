@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from typing import Protocol
 
-from sasoi.claude_client import ClaudeError, Reply, Usage
+from sasoi.claude_client import ClaudeError, Reply, Request, Usage
 from sasoi.conversation import Conversation
 
 
@@ -21,7 +21,7 @@ class Answer:
 
 
 class ChatClient(Protocol):
-    def send(self, messages: list[dict], tools: list[dict]) -> Reply: ...
+    def send(self, request: Request) -> Reply: ...
 
 
 class Tools(Protocol):
@@ -52,4 +52,4 @@ class Agent:
         return Answer(reply.text, usage)
 
     def _send(self) -> Reply:
-        return self._client.send(self._conversation.messages, self._toolbox.definitions)
+        return self._client.send(Request(self._conversation.messages, self._toolbox.definitions))

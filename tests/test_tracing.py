@@ -3,7 +3,7 @@ import json
 
 import pytest
 
-from sasoi.claude_client import ClaudeApiError, Reply, Usage
+from sasoi.claude_client import ClaudeApiError, Reply, Request, Usage
 from sasoi.tools.tool import Tool, ToolError
 from sasoi.tools.toolbox import Toolbox
 from sasoi.tracing import TracedClient, TracedSleep, TracedToolbox, Tracer
@@ -13,7 +13,7 @@ class FakeClient:
     def __init__(self, outcome: Reply | Exception):
         self._outcome = outcome
 
-    def send(self, messages: list[dict], tools: list[dict]) -> Reply:
+    def send(self, request: Request) -> Reply:
         if isinstance(self._outcome, Exception):
             raise self._outcome
         return self._outcome
@@ -30,7 +30,7 @@ def recorded(sink: io.StringIO) -> list[dict]:
 A_TIMER_READING = 0.0
 A_DESCRIPTION = "Does something"
 AN_INPUT_SCHEMA = {"type": "object"}
-A_MESSAGES = [{"role": "user", "content": "hello"}]
+A_REQUEST = Request([{"role": "user", "content": "hello"}], [])
 AN_ERROR_TYPE = "an_error"
 AN_ERROR_MESSAGE = "Something went wrong"
 A_TOOL = Tool("a_tool", A_DESCRIPTION, AN_INPUT_SCHEMA, lambda _: "a result")
@@ -53,7 +53,7 @@ class TestTracedClient:
         reply = Reply([{"type": "text", "text": "Hi!"}], "end_turn", Usage(input_tokens=12, output_tokens=5))
         client = TracedClient(FakeClient(reply), Tracer(sink), timer(1.0, 1.25))
 
-        returned = client.send([{"role": "user", "content": "hello"}], [{"name": "current_time"}])
+        returned = client.send(Request([{"role": "user", "content": "hello"}], [{"name": "current_time"}]))
 
         assert returned == reply
         assert recorded(sink) == [
@@ -74,7 +74,7 @@ class TestTracedClient:
         client = TracedClient(FakeClient(error), Tracer(sink), timer(A_TIMER_READING, A_TIMER_READING))
 
         with pytest.raises(ClaudeApiError):
-            client.send(A_MESSAGES, [])
+            client.send(A_REQUEST)
 
         [event] = recorded(sink)
         assert event["error"] == "529 overloaded_error: Overloaded"
@@ -85,7 +85,7 @@ class TestTracedClient:
         client = TracedClient(FakeClient(error), Tracer(sink), timer(A_TIMER_READING, A_TIMER_READING))
 
         with pytest.raises(ClaudeApiError):
-            client.send(A_MESSAGES, [])
+            client.send(A_REQUEST)
 
         [event] = recorded(sink)
         assert event["retry_after"] == 30

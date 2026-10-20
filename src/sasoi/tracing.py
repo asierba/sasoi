@@ -5,7 +5,7 @@ from collections.abc import Callable
 from typing import TextIO
 
 from sasoi.agent import ChatClient, Tools
-from sasoi.claude_client import ClaudeApiError, ClaudeError, Reply
+from sasoi.claude_client import ClaudeApiError, ClaudeError, Reply, Request
 
 Timer = Callable[[], float]
 
@@ -31,25 +31,24 @@ class TracedClient:
         self._tracer = tracer
         self._timer = timer
 
-    def send(self, messages: list[dict], tools: list[dict]) -> Reply:
+    def send(self, request: Request) -> Reply:
         start = self._timer()
         try:
-            reply = self._client.send(messages, tools)
+            reply = self._client.send(request)
         except ClaudeError as error:
-            self._record(messages, tools, start, error_outcome(error))
+            self._record(request, start, error_outcome(error))
             raise
         self._record(
-            messages,
-            tools,
+            request,
             start,
             {"content": reply.content, "stop_reason": reply.stop_reason, "usage": asdict(reply.usage)},
         )
         return reply
 
-    def _record(self, messages: list[dict], tools: list[dict], start: float, outcome: dict) -> None:
+    def _record(self, request: Request, start: float, outcome: dict) -> None:
         duration_ms = (self._timer() - start) * 1000
         self._tracer.record(
-            {"type": "claude_call", "messages": messages, "tools": tools, **outcome, "duration_ms": duration_ms}
+            {"type": "claude_call", **asdict(request), **outcome, "duration_ms": duration_ms}
         )
 
 

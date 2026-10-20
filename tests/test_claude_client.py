@@ -3,12 +3,13 @@ import json
 import httpx
 import pytest
 
-from sasoi.claude_client import ClaudeApiError, ClaudeClient, ClaudeConnectionError, Reply, Usage
+from sasoi.claude_client import ClaudeApiError, ClaudeClient, ClaudeConnectionError, Reply, Request, Usage
 
 
 A_KEY = "test-key"
 A_MODEL = "test-model"
 A_MESSAGES = [{"role": "user", "content": "hi"}]
+A_REQUEST = Request(A_MESSAGES, [])
 A_USAGE = {"input_tokens": 1, "output_tokens": 1}
 
 
@@ -29,7 +30,7 @@ class TestClaudeClient:
 
         http = httpx.Client(transport=httpx.MockTransport(handler))
 
-        reply = ClaudeClient("test-key", "test-model", http).send([{"role": "user", "content": "hi"}], [])
+        reply = ClaudeClient("test-key", "test-model", http).send(Request([{"role": "user", "content": "hi"}], []))
 
         request = captured["request"]
         assert str(request.url) == "https://api.anthropic.com/v1/messages"
@@ -55,7 +56,7 @@ class TestClaudeClient:
 
         http = httpx.Client(transport=httpx.MockTransport(handler))
 
-        reply = ClaudeClient(A_KEY, A_MODEL, http).send(A_MESSAGES, tools)
+        reply = ClaudeClient(A_KEY, A_MODEL, http).send(Request(A_MESSAGES, tools))
 
         assert json.loads(captured["request"].content)["tools"] == tools
         assert reply.content == [tool_use]
@@ -74,7 +75,7 @@ class TestClaudeClient:
         http = httpx.Client(transport=httpx.MockTransport(handler))
 
         with pytest.raises(ClaudeApiError) as raised:
-            ClaudeClient(A_KEY, A_MODEL, http).send(A_MESSAGES, [])
+            ClaudeClient(A_KEY, A_MODEL, http).send(A_REQUEST)
 
         assert raised.value.status_code == 401
         assert raised.value.error_type == "authentication_error"
@@ -88,7 +89,7 @@ class TestClaudeClient:
         http = httpx.Client(transport=httpx.MockTransport(handler))
 
         with pytest.raises(ClaudeApiError) as raised:
-            ClaudeClient(A_KEY, A_MODEL, http).send(A_MESSAGES, [])
+            ClaudeClient(A_KEY, A_MODEL, http).send(A_REQUEST)
 
         assert raised.value.status_code == 502
         assert raised.value.error_type is None
@@ -101,7 +102,7 @@ class TestClaudeClient:
         http = httpx.Client(transport=httpx.MockTransport(handler))
 
         with pytest.raises(ClaudeApiError) as raised:
-            ClaudeClient(A_KEY, A_MODEL, http).send(A_MESSAGES, [])
+            ClaudeClient(A_KEY, A_MODEL, http).send(A_REQUEST)
 
         assert raised.value.retry_after == 30.0
 
@@ -112,7 +113,7 @@ class TestClaudeClient:
         http = httpx.Client(transport=httpx.MockTransport(handler))
 
         with pytest.raises(ClaudeConnectionError) as raised:
-            ClaudeClient(A_KEY, A_MODEL, http).send(A_MESSAGES, [])
+            ClaudeClient(A_KEY, A_MODEL, http).send(A_REQUEST)
 
         assert str(raised.value) == "connection failed: nodename nor servname provided"
 
