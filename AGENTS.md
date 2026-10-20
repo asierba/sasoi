@@ -32,7 +32,7 @@ Env: `.env` loaded by `cli.main`; `SASOI_MODEL` picks the model (required, no de
 ## Testing conventions
 
 - HTTP mocked with `httpx.MockTransport`, never real network.
-- `PostgresRunStore` tests run against the `postgres-test` compose service via `TEST_DATABASE_URL` (loaded from `.env` by `tests/conftest.py`); skipped when unset.
+- `PostgresRunStore` tests run against the `postgres-test` compose service via `TEST_DATABASE_URL` (loaded from `.env` by `tests/conftest.py`); they fail when it is unset.
 - CLI tested via fake agent and injected `read`/`write` (no monkeypatching `input`).
 
 ## Docs

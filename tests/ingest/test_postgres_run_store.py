@@ -1,5 +1,3 @@
-import os
-
 import psycopg
 import pytest
 from builders import a_lap, a_run
@@ -11,10 +9,7 @@ from sasoi.sync_cli import migrate
 
 
 @pytest.fixture
-def conn():
-    database_url = os.environ.get("TEST_DATABASE_URL")
-    if not database_url:
-        pytest.skip("TEST_DATABASE_URL not set")
+def conn(database_url):
     migrate(database_url)
     with psycopg.connect(database_url, autocommit=True) as conn:
         conn.execute("TRUNCATE garmin_runs CASCADE")
