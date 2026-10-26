@@ -37,7 +37,7 @@ uv run sasoi-eval
 uv run sasoi-eval --repeat 3
 ```
 
-Asks every question in `evals/runs.toml` and grades the agent's SQL results against each case's ground-truth query. Traces go to `traces/evals/<timestamp>/`. Answers vary between runs, so use `--repeat` to run every case several times and see a pass rate per case, e.g. before and after a change.
+Asks every question in `evals/runs.toml` and grades the agent's SQL results against each case's ground-truth query. Traces go to `traces/evals/<timestamp>/`. Answers vary between runs, so use `--repeat` to run every case several times and see a pass rate per case, e.g. before and after a change. Cases run in parallel; `--workers` sets how many at once (default 8).
 
 ## Tests
 
