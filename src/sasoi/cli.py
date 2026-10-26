@@ -30,6 +30,7 @@ TRACES_DIR = Path("traces")
 RED = "\033[31m"
 YELLOW = "\033[33m"
 DIM = "\033[2m"
+GREY = "\033[90m"
 RESET = "\033[0m"
 
 
@@ -111,6 +112,7 @@ def repl(
             return
         if not prompt:
             continue
+        write(f"{GREY}working…{RESET}")
         try:
             answer = agent.ask(prompt)
         except ClaudeError as error:
