@@ -19,6 +19,7 @@ Env: `.env` loaded by `cli.main`; `SASOI_MODEL` picks the model (required, no de
 ## Architecture
 
 - `cli.py`: `main` wires env, `httpx.Client` and an `Agent` into `repl`. `repl` only does terminal I/O; takes injectable `read`/`write` for tests.
+- `app.py`: `load_config` and `build_agent`, the wiring shared by the chat and eval CLIs.
 - `agent.py`: `Agent.ask` runs one turn: history, Claude call, tool-use loop.
 - `claude_client.py`: raw-HTTP call to the Messages API (no Anthropic SDK, by design). Errors raised as `ClaudeApiError`.
 - `conversation.py`: in-memory message history; `messages` returns a copy.

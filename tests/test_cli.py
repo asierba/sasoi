@@ -1,17 +1,11 @@
-import pytest
-
 from sasoi.agent import Answer
 from sasoi.claude_client import ClaudeApiError, Usage
-from sasoi.cli import DIM, GREY, RED, RESET, YELLOW, Config, load_config, repl
+from sasoi.cli import DIM, GREY, RED, RESET, YELLOW, repl
 from sasoi.pricing import Price
-from sasoi.settings import SettingError
 
 A_USAGE = Usage(input_tokens=1, output_tokens=1)
 A_PROMPT = "a prompt"
 AN_ANSWER_TEXT = "an answer"
-AN_API_KEY = "an api key"
-A_MODEL = "a model"
-A_READER_DATABASE_URL = "postgresql://reader@localhost/sasoi"
 
 
 def an_answer(text: str) -> Answer:
@@ -104,30 +98,3 @@ class TestRepl:
 
         [_, interrupted, _, second_answer, _] = written
         assert [interrupted, second_answer] == [f"{YELLOW}Interrupted{RESET}", "second reply"]
-
-
-class TestLoadConfig:
-    def test_rejects_with_message_when_api_key_missing(self):
-        with pytest.raises(SettingError) as raised:
-            load_config({"SASOI_MODEL": A_MODEL, "READER_DATABASE_URL": A_READER_DATABASE_URL})
-
-        assert str(raised.value) == "ANTHROPIC_API_KEY is not set"
-
-    def test_rejects_with_message_when_model_missing(self):
-        with pytest.raises(SettingError) as raised:
-            load_config({"ANTHROPIC_API_KEY": AN_API_KEY, "READER_DATABASE_URL": A_READER_DATABASE_URL})
-
-        assert str(raised.value) == "SASOI_MODEL is not set"
-
-    def test_rejects_with_message_when_reader_database_url_missing(self):
-        with pytest.raises(SettingError) as raised:
-            load_config({"ANTHROPIC_API_KEY": AN_API_KEY, "SASOI_MODEL": A_MODEL})
-
-        assert str(raised.value) == "READER_DATABASE_URL is not set"
-
-    def test_reads_api_key_model_and_reader_database_url(self):
-        config = load_config(
-            {"ANTHROPIC_API_KEY": "key", "SASOI_MODEL": "claude-test", "READER_DATABASE_URL": "postgresql://db/sasoi"}
-        )
-
-        assert config == Config("key", "claude-test", "postgresql://db/sasoi")
