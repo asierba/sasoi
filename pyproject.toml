@@ -15,6 +15,7 @@ dependencies = [
 [project.scripts]
 sasoi = "sasoi.cli:main"
 sasoi-sync = "sasoi.sync_cli:main"
+sasoi-eval = "sasoi.eval_cli:main"
 
 [dependency-groups]
 dev = [

@@ -1,0 +1,213 @@
+# Each ground-truth query returns only the values a correct answer must be built on.
+# A case passes when one of the agent's run_sql results contains every ground-truth row.
+
+[[case]]
+id = "last-run"
+question = "How was my last run?"
+sql = '''
+SELECT start_time_local::date::text AS date, distance_m, duration_s, avg_hr
+FROM garmin_runs
+ORDER BY start_time_local DESC
+LIMIT 1
+'''
+
+[[case]]
+id = "total-runs-and-km"
+question = "How many runs and how many km have I logged in total?"
+sql = '''
+SELECT count(*) AS runs, sum(distance_m) / 1000 AS km
+FROM garmin_runs
+'''
+
+[[case]]
+id = "km-this-month"
+question = "How many km have I run this month?"
+sql = '''
+SELECT sum(distance_m) / 1000 AS km
+FROM garmin_runs
+WHERE start_time_local >= date_trunc('month', current_date)
+'''
+
+[[case]]
+id = "km-last-two-months"
+question = "Did I run more km last month than the month before?"
+sql = '''
+SELECT to_char(date_trunc('month', start_time_local), 'YYYY-MM') AS month, sum(distance_m) / 1000 AS km
+FROM garmin_runs
+WHERE start_time_local >= date_trunc('month', current_date) - interval '2 months'
+  AND start_time_local < date_trunc('month', current_date)
+GROUP BY 1
+'''
+
+[[case]]
+id = "weekly-km-with-gaps"
+question = "Show my km per week (Monday to Sunday) for the last 8 weeks, including this one."
+sql = '''
+SELECT to_char(week, 'YYYY-MM-DD') AS week, coalesce(sum(r.distance_m), 0) / 1000 AS km
+FROM generate_series(date_trunc('week', current_date) - interval '7 weeks', date_trunc('week', current_date), interval '1 week') AS week
+LEFT JOIN garmin_runs r ON date_trunc('week', r.start_time_local) = week
+GROUP BY week
+'''
+
+[[case]]
+id = "monthly-km-with-gaps"
+question = "How many km did I run each month over the last 12 months, including this one?"
+sql = '''
+SELECT to_char(month, 'YYYY-MM') AS month, coalesce(sum(r.distance_m), 0) / 1000 AS km
+FROM generate_series(date_trunc('month', current_date) - interval '11 months', date_trunc('month', current_date), interval '1 month') AS month
+LEFT JOIN garmin_runs r ON date_trunc('month', r.start_time_local) = month
+GROUP BY month
+'''
+
+[[case]]
+id = "longest-run-ever"
+question = "What is my longest run ever?"
+sql = '''
+SELECT start_time_local::date::text AS date, distance_m
+FROM garmin_runs
+ORDER BY distance_m DESC
+LIMIT 1
+'''
+
+[[case]]
+id = "longest-run-recent"
+question = "What was my longest run in the last 3 months?"
+sql = '''
+SELECT start_time_local::date::text AS date, distance_m
+FROM garmin_runs
+WHERE start_time_local >= current_date - interval '3 months'
+ORDER BY distance_m DESC
+LIMIT 1
+'''
+
+[[case]]
+id = "fastest-run-over-5k"
+question = "What was my fastest run of at least 5 km in the last year, by average pace?"
+sql = '''
+SELECT start_time_local::date::text AS date, distance_m
+FROM garmin_runs
+WHERE distance_m >= 5000 AND start_time_local >= current_date - interval '1 year'
+ORDER BY avg_speed_mps DESC
+LIMIT 1
+'''
+
+[[case]]
+id = "runs-over-10k-this-year"
+question = "How many runs over 10 km have I done this year?"
+sql = '''
+SELECT count(*) AS runs
+FROM garmin_runs
+WHERE distance_m > 10000 AND start_time_local >= date_trunc('year', current_date)
+'''
+
+[[case]]
+id = "treadmill-runs-this-year"
+question = "How many of my runs this year were on a treadmill?"
+sql = '''
+SELECT count(*) AS runs
+FROM garmin_runs
+WHERE activity_type = 'treadmill_running' AND start_time_local >= date_trunc('year', current_date)
+'''
+
+[[case]]
+id = "favourite-weekday"
+question = "On which day of the week do I run most often?"
+sql = '''
+SELECT count(*) AS runs
+FROM garmin_runs
+GROUP BY extract(isodow FROM start_time_local)
+ORDER BY runs DESC
+LIMIT 1
+'''
+
+[[case]]
+id = "monthly-heart-rate"
+question = "What was my average heart rate each month over the last 6 months, including this one?"
+sql = '''
+SELECT to_char(date_trunc('month', start_time_local), 'YYYY-MM') AS month,
+       sum(avg_hr * duration_s) / sum(duration_s) AS avg_hr
+FROM garmin_runs
+WHERE avg_hr IS NOT NULL
+  AND start_time_local >= date_trunc('month', current_date) - interval '5 months'
+GROUP BY 1
+'''
+
+[[case]]
+id = "easy-share-by-month"
+question = "What share of my running time was in heart rate zones 1 and 2 each month since June this year?"
+sql = '''
+SELECT to_char(date_trunc('month', start_time_local), 'YYYY-MM') AS month,
+       100 * sum(hr_zone_1_s + hr_zone_2_s)
+           / sum(hr_zone_1_s + hr_zone_2_s + hr_zone_3_s + hr_zone_4_s + hr_zone_5_s) AS easy_pct
+FROM garmin_runs
+WHERE hr_zone_1_s IS NOT NULL
+  AND start_time_local >= make_date(extract(year FROM current_date)::int, 6, 1)
+GROUP BY 1
+'''
+
+[[case]]
+id = "last-interval-laps"
+question = "Show the laps of my most recent interval workout with recovery laps, with distance, time and heart rate for each lap."
+sql = '''
+SELECT lap_index, distance_m, duration_s, avg_hr
+FROM garmin_laps
+WHERE activity_id = (
+    SELECT r.activity_id
+    FROM garmin_runs r
+    WHERE EXISTS (
+        SELECT 1 FROM garmin_laps l
+        WHERE l.activity_id = r.activity_id AND l.intensity_type IN ('RECOVERY', 'REST')
+    )
+    ORDER BY r.start_time_local DESC
+    LIMIT 1
+)
+'''
+
+[[case]]
+id = "vo2max-change"
+question = "How has my VO2 max estimate changed over the last year? Give the first and the latest value."
+sql = '''
+(SELECT start_time_local::date::text AS date, vo2max
+ FROM garmin_runs
+ WHERE vo2max IS NOT NULL AND start_time_local >= current_date - interval '1 year'
+ ORDER BY start_time_local
+ LIMIT 1)
+UNION ALL
+(SELECT start_time_local::date::text, vo2max
+ FROM garmin_runs
+ WHERE vo2max IS NOT NULL
+ ORDER BY start_time_local DESC
+ LIMIT 1)
+'''
+
+[[case]]
+id = "cadence-last-month"
+question = "What was my average cadence last month?"
+sql = '''
+SELECT avg(avg_cadence_spm) AS cadence
+FROM garmin_runs
+WHERE avg_cadence_spm > 0
+  AND start_time_local >= date_trunc('month', current_date) - interval '1 month'
+  AND start_time_local < date_trunc('month', current_date)
+'''
+
+[[case]]
+id = "load-this-week-vs-last"
+question = "What was my total training load this week compared with last week (Monday to Sunday)?"
+sql = '''
+SELECT sum(training_load) AS load
+FROM garmin_runs
+WHERE start_time_local >= date_trunc('week', current_date) - interval '1 week'
+GROUP BY date_trunc('week', start_time_local)
+'''
+
+[[case]]
+id = "pace-at-moderate-heart-rate"
+question = "Compare my average pace this year with last year, counting only runs with an average heart rate between 140 and 150 bpm."
+sql = '''
+SELECT extract(year FROM start_time_local)::int AS year, sum(duration_s) / sum(distance_m) * 1000 AS pace_s_per_km
+FROM garmin_runs
+WHERE avg_hr BETWEEN 140 AND 150
+  AND start_time_local >= date_trunc('year', current_date) - interval '1 year'
+GROUP BY 1
+'''
