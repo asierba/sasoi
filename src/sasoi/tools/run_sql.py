@@ -6,6 +6,7 @@ import psycopg
 from sasoi.tools.tool import Tool, ToolError
 
 MAX_ROWS = 200
+TRUNCATED_FOOTER = f"(truncated: more than {MAX_ROWS} rows; showing the first {MAX_ROWS})"
 
 
 def run_sql(conn: psycopg.Connection, schema: str) -> Tool:
@@ -50,5 +51,5 @@ def _csv(header: list[str], rows: list[tuple]) -> str:
 
 def _footer(row_count: int) -> str:
     if row_count > MAX_ROWS:
-        return f"(truncated: more than {MAX_ROWS} rows; showing the first {MAX_ROWS})"
+        return TRUNCATED_FOOTER
     return f"({row_count} rows)"

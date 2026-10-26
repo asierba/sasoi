@@ -1,4 +1,5 @@
 from sasoi.evals.grading import Grade, QueryResult
+from sasoi.tools.run_sql import TRUNCATED_FOOTER
 
 A_CASE_ID = "a-case"
 
@@ -18,7 +19,7 @@ class TestFromCsv:
         )
 
     def test_flags_a_truncated_result(self):
-        result = QueryResult.from_csv("n\n1\n(truncated: more than 1 rows; showing the first 1)")
+        result = QueryResult.from_csv(f"n\n1\n{TRUNCATED_FOOTER}")
 
         assert result == QueryResult([["1"]], truncated=True)
 

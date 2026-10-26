@@ -2,6 +2,8 @@ import csv
 import io
 from dataclasses import dataclass
 
+from sasoi.tools.run_sql import TRUNCATED_FOOTER
+
 UNIT_SCALES = (1, 1000, 1 / 1000, 60, 1 / 60, 100, 1 / 100)
 ABSOLUTE_TOLERANCE = 0.5
 RELATIVE_TOLERANCE = 0.01
@@ -16,7 +18,7 @@ class QueryResult:
     def from_csv(cls, text: str) -> "QueryResult":
         table, _, footer = text.rpartition("\n")
         header_and_rows = list(csv.reader(io.StringIO(table)))
-        return cls(header_and_rows[1:], footer.startswith("(truncated"))
+        return cls(header_and_rows[1:], footer == TRUNCATED_FOOTER)
 
     def contains(self, expected: "QueryResult") -> bool:
         return all(any(_row_contains(actual, row) for actual in self.rows) for row in expected.rows)
