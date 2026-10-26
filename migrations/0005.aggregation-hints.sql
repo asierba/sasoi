@@ -1,0 +1,2 @@
+COMMENT ON COLUMN garmin_runs.activity_type IS 'running, treadmill_running, trail_running or another Garmin running type. Every type is a run: total across types unless asked to split by type.';
+COMMENT ON COLUMN garmin_runs.avg_hr IS 'Average heart rate in beats per minute. Null when no heart rate was recorded. To average across runs, weight by duration_s: sum(avg_hr * duration_s) / sum(duration_s).';

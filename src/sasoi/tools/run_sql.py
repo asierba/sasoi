@@ -27,7 +27,8 @@ def run_sql(conn: psycopg.Connection, schema: str) -> Tool:
         name="run_sql",
         description=(
             "Run a read-only PostgreSQL SELECT query on the training database and get the result as CSV. "
-            f"Returns at most {MAX_ROWS} rows, so aggregate in SQL rather than fetching raw rows.\n\n"
+            f"Returns at most {MAX_ROWS} rows, so aggregate in SQL rather than fetching raw rows. "
+            "When grouping by period, include periods with no runs as 0 (e.g. with generate_series).\n\n"
             f"Schema:\n\n{schema}"
         ),
         input_schema={
