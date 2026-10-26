@@ -1,7 +1,7 @@
 from pathlib import Path
 
 from sasoi.evals.grading import Grade
-from sasoi.evals.report import line, summary
+from sasoi.evals.report import line, pass_rates, summary
 
 
 class TestLine:
@@ -10,6 +10,18 @@ class TestLine:
 
     def test_shows_a_failed_case_with_every_reason(self):
         assert line(Grade("a-case", ("first reason", "second reason"))) == "FAIL a-case: first reason; second reason"
+
+
+class TestPassRates:
+    def test_shows_how_many_runs_of_each_case_passed_in_case_order(self):
+        grades = [
+            Grade("flaky", ()),
+            Grade("stable", ()),
+            Grade("flaky", ("a reason",)),
+            Grade("stable", ()),
+        ]
+
+        assert pass_rates(grades) == "1/2 flaky\n2/2 stable"
 
 
 class TestSummary:

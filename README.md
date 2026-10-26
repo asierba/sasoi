@@ -30,6 +30,15 @@ Pulls the latest Garmin runs and their laps into Postgres. Only new runs are fet
 
 Set `SASOI_GARMIN_LIMIT` in `.env` to change how many recent Garmin runs are kept. Progress is logged to stdout at `SASOI_LOG_LEVEL`; other libraries only log warnings. The first Garmin login asks for email, password and MFA code; the token is saved in `~/.garminconnect` and reused.
 
+## Evals
+
+```sh
+uv run sasoi-eval
+uv run sasoi-eval --repeat 3
+```
+
+Asks every question in `evals/runs.toml` and grades the agent's SQL results against each case's ground-truth query. Traces go to `traces/evals/<timestamp>/`. Answers vary between runs, so use `--repeat` to run every case several times and see a pass rate per case, e.g. before and after a change.
+
 ## Tests
 
 ```sh
