@@ -203,11 +203,11 @@ GROUP BY date_trunc('week', start_time_local)
 
 [[case]]
 id = "pace-at-moderate-heart-rate"
-question = "Compare my average pace this year with last year, counting only runs with an average heart rate between 140 and 150 bpm."
+question = "Compare my average pace over the whole of last year with this year so far, counting only runs with an average heart rate between 140 and 150 bpm."
 sql = '''
-SELECT extract(year FROM start_time_local)::int AS year, sum(duration_s) / sum(distance_m) * 1000 AS pace_s_per_km
+SELECT sum(duration_s) / sum(distance_m) * 1000 AS pace_s_per_km
 FROM garmin_runs
 WHERE avg_hr BETWEEN 140 AND 150
   AND start_time_local >= date_trunc('year', current_date) - interval '1 year'
-GROUP BY 1
+GROUP BY extract(year FROM start_time_local)
 '''
