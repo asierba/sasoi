@@ -4,7 +4,8 @@
 !.env.example
 
 # Personal data, eval snapshots and traces
-data/
+data/*
+!data/athlete_profile.example.md
 evals/snapshot/
 traces/
 *.fit

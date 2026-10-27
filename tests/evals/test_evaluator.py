@@ -7,7 +7,7 @@ from sasoi.evals.cases import Case
 from sasoi.evals.evaluator import Evaluator
 from sasoi.evals.grading import Grade
 
-A_CONFIG = Config("a-key", "a-model", "postgresql://unused")
+A_CONFIG = Config("a-key", "a-model", "postgresql://unused", "an athlete profile")
 A_QUESTION = "a question"
 A_USAGE = {"input_tokens": 1, "output_tokens": 1}
 

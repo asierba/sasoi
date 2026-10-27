@@ -6,6 +6,7 @@ Sasoi (Basque for being in good shape) is a personal agent that analyses my runn
 
 ```sh
 cp .env.example .env   # then set ANTHROPIC_API_KEY
+cp data/athlete_profile.example.md data/athlete_profile.md   # then edit it
 uv sync
 uv run pre-commit install   # lint, format, type check, tests and evals before each commit
 docker compose up -d
@@ -20,6 +21,8 @@ uv run sasoi
 Type a message at the `>` prompt. Ctrl-D exits.
 
 `SASOI_MODEL` in `.env` picks the Claude model.
+
+`data/athlete_profile.md` tells the agent your weekly session budget, goals and constraints; every recommendation has to fit it. It is personal, so it is gitignored.
 
 ## Sync
 
