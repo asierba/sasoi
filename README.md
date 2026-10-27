@@ -7,6 +7,7 @@ Sasoi (Basque for being in good shape) is a personal agent that analyses my runn
 ```sh
 cp .env.example .env   # then set ANTHROPIC_API_KEY
 uv sync
+uv run pre-commit install   # lint, format, type check, tests and evals before each commit
 docker compose up -d
 ```
 

@@ -6,6 +6,7 @@ Sasoi: personal agent analysing running (Garmin Connect) and strength (Hevy) tra
 
 ```sh
 uv sync                                   # install
+uv run pre-commit install                 # run ruff, pyright, pytest and sasoi-eval before each commit
 uv run sasoi                              # chat REPL (needs ANTHROPIC_API_KEY in .env)
 docker compose up -d                      # local services (Postgres)
 uv run sasoi-sync                         # apply migrations, pull latest Garmin runs into Postgres
