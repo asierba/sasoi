@@ -73,6 +73,13 @@ class TestEvaluate:
 
         assert grade == Grade("a-case", ("agent failed: 400 invalid_request_error: Bad request",))
 
+    def test_fails_when_the_ground_truth_query_raises(self, reader, tmp_path):
+        http = a_claude(a_final_reply())
+
+        grade = Evaluator(A_CONFIG, http, reader, tmp_path).evaluate(Case("a-case", A_QUESTION, "SELECT 1 / 0"))
+
+        assert grade == Grade("a-case", ("ground truth failed: division by zero",))
+
     def test_writes_the_case_trace_to_the_run_dir(self, reader, tmp_path):
         http = a_claude(a_final_reply())
 

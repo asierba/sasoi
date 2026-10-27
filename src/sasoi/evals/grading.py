@@ -47,6 +47,10 @@ class Grade:
     def agent_failed(cls, case_id: str, error: Exception) -> "Grade":
         return cls(case_id, (f"agent failed: {error}",))
 
+    @classmethod
+    def ground_truth_failed(cls, case_id: str, error: Exception) -> "Grade":
+        return cls(case_id, (f"ground truth failed: {error}",))
+
     @property
     def passed(self) -> bool:
         return not self.failures

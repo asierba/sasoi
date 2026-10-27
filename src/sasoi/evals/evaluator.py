@@ -9,6 +9,7 @@ from sasoi.claude_client import ClaudeError
 from sasoi.evals.cases import Case
 from sasoi.evals.grading import Grade, QueryResult
 from sasoi.tools.run_sql import run_sql
+from sasoi.tools.tool import ToolError
 from sasoi.tracing import Tracer
 
 
@@ -25,7 +26,10 @@ class Evaluator:
             self._ask(case.question, trace_path)
         except ClaudeError as error:
             return Grade.agent_failed(case.id, error)
-        ground_truth_csv = run_sql(self._db, "").run({"query": case.sql})
+        try:
+            ground_truth_csv = run_sql(self._db, "").run({"query": case.sql})
+        except ToolError as error:
+            return Grade.ground_truth_failed(case.id, error)
         ground_truth = QueryResult.from_csv(ground_truth_csv)
         agent_results = [
             QueryResult.from_csv(csv) for csv in _successful_run_sql_results(_read_trace_events(trace_path))
