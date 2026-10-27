@@ -4,4 +4,6 @@ FEEDBACK_RUN = (
     "Finish with 1 to 3 concrete recommendations on how to improve."
 )
 
-COMMANDS = {"/feedback-run": FEEDBACK_RUN}
+NEXT_RUN = "What do you recommend for my next run?"
+
+COMMANDS = {"/feedback-run": FEEDBACK_RUN, "/next-run": NEXT_RUN}
