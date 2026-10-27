@@ -130,6 +130,7 @@ Phase 0 runs on the laptop; by the end of phase 1 the same containers move to an
 - Dockerfile and a compose service for the app, then move to the always-on host, with images built for both amd64 and arm64 so the app runs on an x86 or ARM VPS and later on a Raspberry Pi
 - Garmin login without interaction (no MFA prompt) on the host
 - Database passwords (owner and `sasoi_reader`) set from secrets on the host, not hardcoded in the compose file and migrations
+- Athlete profile in production: CI writes `data/athlete_profile.md` on every deploy, with no SSH or manual step; never committed in plain text (see open decisions)
 - Tracing tool with a browser UI, replacing the JSONL traces (see open decisions)
 
 **Ships:** feedback in my inbox after every run.
@@ -221,6 +222,7 @@ Phase 0 runs on the laptop; by the end of phase 1 the same containers move to an
 
 - Weekly summary email
 - Plan creation, with my approval before it is stored
+- Revisit the athlete profile: move it from a file to the database if the agent should propose changes to it
 - Plan adjustments after missed sessions, with my approval
 - MCP server exposing the tools
 - Jev spike: classifying run type for plan matching ([Jev](https://en.wikipedia.org/wiki/Jev_(AI_model)) is a discriminative model: it returns typed, calibrated predictions rather than generated text)
@@ -278,6 +280,7 @@ Going deeper, such as training models from scratch, is a separate decision for l
 | Hevy data access | Risk | Ongoing | Private web API confirmed in the spike, but the bearer token dies on logout and how to get a new one is unknown; Hevy may block it at any time; fallbacks: Pro API, CSV export, then screenshots |
 | Always-on host | Decision | End of phase 1 | Needed for triggers and the web chat; leaning to a cheap VPS (no spare machine at home); compare providers when deciding, as prices moved a lot in 2026. Later, if the project proves its value, move to a Raspberry Pi or similar cheap home machine |
 | Tracing tool | Decision | End of phase 1 | Depends on the always-on host: self-hosted on it (e.g. Phoenix, Langfuse) vs SaaS; traces contain health data. JSONL files plus `scripts/trace.sh` until then; OpenTelemetry keeps the backend swappable |
+| Athlete profile in production | Decision | End of phase 1 | Personal data that sync cannot rebuild, so it needs a source of truth outside the host that CI can deploy from. CI secret (one `gh secret set` per change, but cannot be read back) vs encrypted in the repo with sops and age (versioned, more tooling). Not plain in the repo or a seed migration: no personal data in the codebase |
 | Hevy access route | Decision | End of phase 3 | Private API (needs automatic token renewal) vs Hevy Pro at $2.99/month; keep Pro only if it earns it |
 | Jev spike | Decision | End of phase 7 | Discriminative model vs an LLM; candidate use: classifying run type for plan matching |
 | Local models | Decision | End of phase 9 | Which steps can run on Ollama |
