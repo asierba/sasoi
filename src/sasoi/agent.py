@@ -46,6 +46,10 @@ class Agent:
         self._system_prompt = system_prompt
         self._commands = commands or {}
 
+    @property
+    def commands(self) -> list[str]:
+        return list(self._commands)
+
     def ask(self, prompt: str) -> Answer:
         final_prompt = self._commands.get(prompt, prompt)
         self._conversation.add_user_message(final_prompt)

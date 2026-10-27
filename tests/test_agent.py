@@ -59,6 +59,11 @@ class TestAgent:
 
         assert client.calls == [[{"role": "user", "content": "the command prompt"}]]
 
+    def test_lists_its_commands(self):
+        agent = Agent(Conversation(), FakeClient(), Toolbox([]), A_SYSTEM_PROMPT, {"/a-command": "a command prompt"})
+
+        assert agent.commands == ["/a-command"]
+
     def test_runs_requested_tool_and_sends_result_back(self):
         tool_use = {"type": "tool_use", "id": "toolu_1", "name": "current_time", "input": {}}
         client = FakeClient(Reply([tool_use], "tool_use"), a_text_reply("It is 09:00"))

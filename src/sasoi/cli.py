@@ -7,6 +7,8 @@ from typing import Protocol, TextIO
 import httpx
 import psycopg
 from dotenv import load_dotenv
+from prompt_toolkit import PromptSession
+from prompt_toolkit.completion import WordCompleter
 
 from sasoi.agent import Answer
 from sasoi.app import Config, build_agent, load_config
@@ -37,7 +39,9 @@ def main() -> None:
     ):
         tracer = Tracer(trace_file)
         tracer.record({"type": "session", "model": config.model, "max_tokens": MAX_TOKENS})
-        repl(build_agent(config, http, db, tracer), PRICES.get(config.model))
+        agent = build_agent(config, http, db, tracer)
+        session = PromptSession(completer=WordCompleter(agent.commands, sentence=True))
+        repl(agent, PRICES.get(config.model), read=session.prompt)
 
 
 def _config() -> Config:
