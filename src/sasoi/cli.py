@@ -6,9 +6,12 @@ from typing import Protocol, TextIO
 
 import httpx
 import psycopg
+import rich
 from dotenv import load_dotenv
 from prompt_toolkit import PromptSession
 from prompt_toolkit.completion import WordCompleter
+from prompt_toolkit.styles import Style
+from rich.markdown import Markdown
 
 from sasoi.agent import Answer
 from sasoi.app import Config, build_agent, load_config
@@ -23,6 +26,7 @@ YELLOW = "\033[33m"
 DIM = "\033[2m"
 GREY = "\033[90m"
 RESET = "\033[0m"
+PROMPT_STYLE = Style.from_dict({"prompt": "ansicyan bold", "": "bold"})
 
 
 class ChatAgent(Protocol):
@@ -40,8 +44,8 @@ def main() -> None:
         tracer = Tracer(trace_file)
         tracer.record({"type": "session", "model": config.model, "max_tokens": MAX_TOKENS})
         agent = build_agent(config, http, db, tracer)
-        session = PromptSession(completer=WordCompleter(agent.commands, sentence=True))
-        repl(agent, PRICES.get(config.model), read=session.prompt)
+        session = PromptSession(completer=WordCompleter(agent.commands, sentence=True), style=PROMPT_STYLE)
+        repl(agent, PRICES.get(config.model), read=lambda message: session.prompt([("class:prompt", message)]))
 
 
 def _config() -> Config:
@@ -62,11 +66,16 @@ def usage_line(answer: Answer, price: Price | None) -> str:
     return f"{DIM}{tokens}{cost}{RESET}"
 
 
+def print_markdown(text: str) -> None:
+    rich.print(Markdown(text))
+
+
 def repl(
     agent: ChatAgent,
     price: Price | None = None,
     read: Callable[[str], str] = input,
     write: Callable[[str], None] = print,
+    write_markdown: Callable[[str], None] = print_markdown,
 ) -> None:
     while True:
         try:
@@ -85,5 +94,6 @@ def repl(
         except KeyboardInterrupt:
             write(f"{YELLOW}Interrupted{RESET}")
             continue
-        write(answer.text)
+        write_markdown(answer.text)
         write(usage_line(answer, price))
+        write_markdown("---")

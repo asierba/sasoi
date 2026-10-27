@@ -41,43 +41,74 @@ class TestRepl:
         agent = FakeAgent(an_answer("Hi!"), an_answer("You said hello"))
         written: list[str] = []
 
-        repl(agent, read=typed("hello", "what did I say?"), write=written.append)
+        repl(
+            agent,
+            read=typed("hello", "what did I say?"),
+            write=written.append,
+            write_markdown=written.append,
+        )
 
         assert agent.prompts == ["hello", "what did I say?"]
-        [_, first_answer, _, _, second_answer, _] = written
+        [_, first_answer, _, _, _, second_answer, _, _] = written
         assert [first_answer, second_answer] == ["Hi!", "You said hello"]
 
     def test_writes_tokens_and_cost_after_each_answer(self):
         agent = FakeAgent(Answer("Hi!", Usage(input_tokens=1_200, output_tokens=300)))
         written: list[str] = []
 
-        repl(agent, Price(input_per_mtok=1.00, output_per_mtok=5.00), read=typed(A_PROMPT), write=written.append)
+        repl(
+            agent,
+            Price(input_per_mtok=1.00, output_per_mtok=5.00),
+            read=typed(A_PROMPT),
+            write=written.append,
+            write_markdown=written.append,
+        )
 
-        [_, answer, usage_line] = written
+        [_, answer, usage_line, _] = written
         assert [answer, usage_line] == ["Hi!", f"{DIM}1,200 in · 300 out · $0.0027{RESET}"]
 
     def test_writes_tokens_only_when_model_has_no_price(self):
         agent = FakeAgent(Answer(AN_ANSWER_TEXT, Usage(input_tokens=1_200, output_tokens=300)))
         written: list[str] = []
 
-        repl(agent, None, read=typed(A_PROMPT), write=written.append)
+        repl(
+            agent,
+            None,
+            read=typed(A_PROMPT),
+            write=written.append,
+            write_markdown=written.append,
+        )
 
-        [_, _, usage_line] = written
+        [_, _, usage_line, _] = written
         assert usage_line == f"{DIM}1,200 in · 300 out{RESET}"
 
     def test_shows_working_in_grey_before_the_answer(self):
         agent = FakeAgent(an_answer("Hi!"))
         written: list[str] = []
 
-        repl(agent, read=typed(A_PROMPT), write=written.append)
+        repl(agent, read=typed(A_PROMPT), write=written.append, write_markdown=written.append)
 
-        [waiting, answer, _] = written
+        [waiting, answer, _, _] = written
         assert [waiting, answer] == [f"{GREY}working…{RESET}", "Hi!"]
+
+    def test_writes_a_markdown_separator_after_each_turn(self):
+        agent = FakeAgent(an_answer(AN_ANSWER_TEXT))
+        written: list[str] = []
+
+        repl(agent, read=typed(A_PROMPT), write=written.append, write_markdown=written.append)
+
+        [_, _, _, separator] = written
+        assert separator == "---"
 
     def test_skips_empty_prompts(self):
         agent = FakeAgent()
 
-        repl(agent, read=typed("   ", ""), write=lambda text: None)
+        repl(
+            agent,
+            read=typed("   ", ""),
+            write=lambda text: None,
+            write_markdown=lambda text: None,
+        )
 
         assert agent.prompts == []
 
@@ -85,16 +116,26 @@ class TestRepl:
         agent = FakeAgent(ClaudeApiError(529, "overloaded_error", "Overloaded"), an_answer("second reply"))
         written: list[str] = []
 
-        repl(agent, read=typed(A_PROMPT, A_PROMPT), write=written.append)
+        repl(
+            agent,
+            read=typed(A_PROMPT, A_PROMPT),
+            write=written.append,
+            write_markdown=written.append,
+        )
 
-        [_, error, _, second_answer, _] = written
+        [_, error, _, second_answer, _, _] = written
         assert [error, second_answer] == [f"{RED}Error: 529 overloaded_error: Overloaded{RESET}", "second reply"]
 
     def test_shows_interrupted_in_yellow_on_ctrl_c_and_keeps_going(self):
         agent = FakeAgent(KeyboardInterrupt(), an_answer("second reply"))
         written: list[str] = []
 
-        repl(agent, read=typed(A_PROMPT, A_PROMPT), write=written.append)
+        repl(
+            agent,
+            read=typed(A_PROMPT, A_PROMPT),
+            write=written.append,
+            write_markdown=written.append,
+        )
 
-        [_, interrupted, _, second_answer, _] = written
+        [_, interrupted, _, second_answer, _, _] = written
         assert [interrupted, second_answer] == [f"{YELLOW}Interrupted{RESET}", "second reply"]
