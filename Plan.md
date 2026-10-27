@@ -103,6 +103,7 @@ Phase 0 runs on the laptop; by the end of phase 1 the same containers move to an
   - [x] ~~Data tools: add a read-only `run_sql` tool and the schema description to the loop~~
   - [x] ~~First evals: 15–20 real questions about runs, each with a hand-written SQL query as ground truth; run the agent and read every trace~~
   - [x] ~~`/feedback-run` chat command: a saved prompt for feedback on my last run~~
+- [ ] Athlete profile: a gitignored markdown file with my weekly session budget (runs and lifts combined), goals and constraints, loaded into the prompt so recommendations fit it
 - [ ] Hevy foundation: the same path for strength, on top of the Garmin one
   - [ ] Ingestion: all workouts pulled into Postgres
   - [ ] Data tools: Hevy tables added to the schema description
@@ -125,6 +126,7 @@ Phase 0 runs on the laptop; by the end of phase 1 the same containers move to an
 - Feedback evals: numbers checked by code, usefulness and tone scored by an LLM judge
   - Run: the `/feedback-run` prompt is the first case
   - Strength: the `/feedback-strength` prompt is the first case, in phase 3
+  - Recommendations that exceed the athlete profile's weekly session budget fail
 - Dockerfile and a compose service for the app, then move to the always-on host, with images built for both amd64 and arm64 so the app runs on an x86 or ARM VPS and later on a Raspberry Pi
 - Garmin login without interaction (no MFA prompt) on the host
 - Database passwords (owner and `sasoi_reader`) set from secrets on the host, not hardcoded in the compose file and migrations
@@ -204,6 +206,7 @@ Phase 0 runs on the laptop; by the end of phase 1 the same containers move to an
 - Plan schema: weeks, sessions, targets
 - Upload: a markdown or PDF plan extracted into the schema with structured outputs
 - Matching each session to its planned session, and adherence in the feedback
+- Plans checked against the athlete profile: no week exceeds its session budget
 - Prompt injection review: uploaded plans are untrusted input
 
 **Ships:** feedback that says how each session fits my plan.
