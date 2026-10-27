@@ -37,6 +37,8 @@ def main() -> None:
     if args.repeat > 1:
         print(pass_rates(grades))
     print(summary(grades, run_dir))
+    if not all(grade.passed for grade in grades):
+        raise SystemExit(1)
 
 
 def _args() -> argparse.Namespace:
