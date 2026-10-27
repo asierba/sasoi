@@ -47,11 +47,12 @@ uv run pytest
 
 Database tests run against the `postgres-test` compose service (in-memory, port 5433) via `TEST_DATABASE_URL`; they fail when it is not set.
 
-## Lint and format
+## Lint, format and type check
 
 ```sh
 uv run ruff check --fix .
 uv run ruff format .
+uv run pyright
 ```
 
 ## Architecture

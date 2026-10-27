@@ -14,6 +14,7 @@ uv run sasoi-eval --repeat 3              # run every case 3 times, show a pass 
 uv run pytest                             # all tests
 uv run pytest tests/test_cli.py::TestRepl::test_skips_empty_prompts   # single test
 uv run ruff check --fix . && uv run ruff format .   # lint and format (config in pyproject.toml)
+uv run pyright                            # type check src and tests
 scripts/trace.sh [--full] [trace.jsonl]   # follow latest trace; --full skips truncating tool results
 ```
 
