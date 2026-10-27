@@ -103,10 +103,12 @@ Phase 0 runs on the laptop; by the end of phase 1 the same containers move to an
   - [x] ~~Data tools: add a read-only `run_sql` tool and the schema description to the loop~~
   - [x] ~~First evals: 15–20 real questions about runs, each with a hand-written SQL query as ground truth; run the agent and read every trace~~
   - [ ] Two eval datasets: a frozen, gitignored snapshot of my data, and a small synthetic set in the repo for CI and demos
+  - [x] ~~`/feedback-run` chat command: a saved prompt for feedback on my last run~~
 - [ ] Hevy foundation: the same path for strength, on top of the Garmin one
   - [ ] Ingestion: all workouts pulled into Postgres
   - [ ] Data tools: Hevy tables added to the schema description
   - [ ] Evals: strength and combined run-and-lift questions added to both datasets
+  - [ ] `/feedback-strength` chat command: a saved prompt for feedback on my last strength session
 
 **Ships:** a chat CLI on my laptop that answers questions about my runs and lifts.
 
@@ -120,8 +122,10 @@ Phase 0 runs on the laptop; by the end of phase 1 the same containers move to an
 
 - Sync job polling Garmin Connect, plus a processed-sessions table so nothing is sent twice
 - Jitter in Claude retry backoff, now that the feedback job and the chat can retry at the same time
-- Feedback workflow: context pack, write, validate the numbers, send
+- Feedback workflow: context pack, write, validate the numbers, send; starts from the `/feedback-run` prompt (`/feedback-strength` for strength in phase 3)
 - Feedback evals: numbers checked by code, usefulness and tone scored by an LLM judge
+  - Run: the `/feedback-run` prompt is the first case
+  - Strength: the `/feedback-strength` prompt is the first case, in phase 3
 - Dockerfile and a compose service for the app, then move to the always-on host, with images built for both amd64 and arm64 so the app runs on an x86 or ARM VPS and later on a Raspberry Pi
 - Garmin login without interaction (no MFA prompt) on the host
 - Database passwords (owner and `sasoi_reader`) set from secrets on the host, not hardcoded in the compose file and migrations

@@ -7,6 +7,7 @@ import psycopg
 
 from sasoi.agent import Agent
 from sasoi.claude_client import ClaudeClient
+from sasoi.commands import COMMANDS
 from sasoi.conversation import Conversation
 from sasoi.open_meteo_client import OpenMeteoClient
 from sasoi.retrying import RetryingClient
@@ -40,7 +41,7 @@ def build_agent(config: Config, http: httpx.Client, db: psycopg.Connection, trac
         sleep=TracedSleep(time.sleep, tracer),
     )
     toolbox = TracedToolbox(_toolbox(http, db), tracer)
-    return Agent(Conversation(), client, toolbox, system_prompt())
+    return Agent(Conversation(), client, toolbox, system_prompt(), COMMANDS)
 
 
 def _toolbox(http: httpx.Client, db: psycopg.Connection) -> Toolbox:

@@ -1,3 +1,4 @@
+from collections.abc import Mapping
 from dataclasses import dataclass
 from typing import Protocol
 
@@ -31,14 +32,23 @@ class Tools(Protocol):
 
 
 class Agent:
-    def __init__(self, conversation: Conversation, client: ChatClient, toolbox: Tools, system_prompt: str):
+    def __init__(
+        self,
+        conversation: Conversation,
+        client: ChatClient,
+        toolbox: Tools,
+        system_prompt: str,
+        commands: Mapping[str, str] | None = None,
+    ):
         self._conversation = conversation
         self._client = client
         self._toolbox = toolbox
         self._system_prompt = system_prompt
+        self._commands = commands or {}
 
     def ask(self, prompt: str) -> Answer:
-        self._conversation.add_user_message(prompt)
+        final_prompt = self._commands.get(prompt, prompt)
+        self._conversation.add_user_message(final_prompt)
         reply = self._send()
         usage = reply.usage
         while reply.stop_reason == "tool_use":

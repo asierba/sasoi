@@ -51,6 +51,14 @@ class TestAgent:
         ]
         assert [answer.text for answer in answers] == ["Hi!", "You said hello"]
 
+    def test_sends_the_prompt_of_a_command(self):
+        client = FakeClient(a_text_reply("a reply"))
+        agent = Agent(Conversation(), client, Toolbox([]), A_SYSTEM_PROMPT, {"/a-command": "the command prompt"})
+
+        agent.ask("/a-command")
+
+        assert client.calls == [[{"role": "user", "content": "the command prompt"}]]
+
     def test_runs_requested_tool_and_sends_result_back(self):
         tool_use = {"type": "tool_use", "id": "toolu_1", "name": "current_time", "input": {}}
         client = FakeClient(Reply([tool_use], "tool_use"), a_text_reply("It is 09:00"))
