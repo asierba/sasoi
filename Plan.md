@@ -101,7 +101,7 @@ Phase 0 runs on the laptop; by the end of phase 1 the same containers move to an
 - [ ] Garmin foundation: the full path from ingestion to evals for runs first
   - [x] ~~Ingestion: latest runs with laps pulled into Postgres~~
   - [x] ~~Data tools: add a read-only `run_sql` tool and the schema description to the loop~~
-  - [ ] First evals: 15–20 real questions about runs, each with a hand-written SQL query as ground truth; run the agent and read every trace
+  - [x] ~~First evals: 15–20 real questions about runs, each with a hand-written SQL query as ground truth; run the agent and read every trace~~
   - [ ] Two eval datasets: a frozen, gitignored snapshot of my data, and a small synthetic set in the repo for CI and demos
 - [ ] Hevy foundation: the same path for strength, on top of the Garmin one
   - [ ] Ingestion: all workouts pulled into Postgres
@@ -169,7 +169,8 @@ Phase 0 runs on the laptop; by the end of phase 1 the same containers move to an
 **Build:**
 
 - Eval set grown to about 50 cases, error analysis on traces
-- LLM judge checked against my own labels
+- LLM judge on the chat answers, trusted only once it agrees with a sample of answers I grade by hand
+  - Improve on code grading, which checks only the agent's `run_sql` results: catch dropped rows or made-up claims in the answer, wrong extra values (0 where there is no data), and results labelled as text instead of dates or years
 - Prompt caching, context management, step and budget guards
 - Evals run on every prompt or model change
 
