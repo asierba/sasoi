@@ -102,7 +102,6 @@ Phase 0 runs on the laptop; by the end of phase 1 the same containers move to an
   - [x] ~~Ingestion: latest runs with laps pulled into Postgres~~
   - [x] ~~Data tools: add a read-only `run_sql` tool and the schema description to the loop~~
   - [x] ~~First evals: 15–20 real questions about runs, each with a hand-written SQL query as ground truth; run the agent and read every trace~~
-  - [ ] Two eval datasets: a frozen, gitignored snapshot of my data, and a small synthetic set in the repo for CI and demos
   - [x] ~~`/feedback-run` chat command: a saved prompt for feedback on my last run~~
 - [ ] Hevy foundation: the same path for strength, on top of the Garmin one
   - [ ] Ingestion: all workouts pulled into Postgres
@@ -178,6 +177,7 @@ Phase 0 runs on the laptop; by the end of phase 1 the same containers move to an
   - Keep code grading on the `run_sql` results; revisit the eval architecture (case format, runner, reporting) to carry both graders
 - Prompt caching, context management, step and budget guards
 - Evals run on every prompt or model change
+- Evals on a frozen, gitignored snapshot of my data with a fixed today, so scores compare across changes
 
 **Ships:** a regression suite I trust, and cheaper, faster runs.
 
