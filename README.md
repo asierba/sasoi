@@ -45,7 +45,7 @@ Asks every question in `evals/runs.toml` and grades the agent's SQL results agai
 uv run pytest
 ```
 
-Database tests run against the `postgres-test` compose service (in-memory, port 5433) via `TEST_DATABASE_URL`; they are skipped when it is not set.
+Database tests run against the `postgres-test` compose service (in-memory, port 5433) via `TEST_DATABASE_URL`; they fail when it is not set.
 
 ## Architecture
 
