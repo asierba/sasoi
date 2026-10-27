@@ -47,8 +47,8 @@ class Agent:
         self._commands = commands or {}
 
     @property
-    def commands(self) -> list[str]:
-        return list(self._commands)
+    def commands(self) -> dict[str, str]:
+        return dict(self._commands)
 
     def ask(self, prompt: str) -> Answer:
         final_prompt = self._commands.get(prompt, prompt)

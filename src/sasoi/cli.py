@@ -44,7 +44,9 @@ def main() -> None:
         tracer = Tracer(trace_file)
         tracer.record({"type": "session", "model": config.model, "max_tokens": MAX_TOKENS})
         agent = build_agent(config, http, db, tracer)
-        session = PromptSession(completer=WordCompleter(agent.commands, sentence=True), style=PROMPT_STYLE)
+        session = PromptSession(
+            completer=WordCompleter(list(agent.commands), meta_dict=agent.commands, sentence=True), style=PROMPT_STYLE
+        )
         repl(agent, PRICES.get(config.model), read=lambda message: session.prompt([("class:prompt", message)]))
 
 
