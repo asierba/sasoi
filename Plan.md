@@ -171,6 +171,7 @@ Phase 0 runs on the laptop; by the end of phase 1 the same containers move to an
 - Eval set grown to about 50 cases, error analysis on traces
 - LLM judge on the chat answers, trusted only once it agrees with a sample of answers I grade by hand
   - Improve on code grading, which checks only the agent's `run_sql` results: catch dropped rows or made-up claims in the answer, wrong extra values (0 where there is no data), and results labelled as text instead of dates or years
+  - Keep code grading on the `run_sql` results; revisit the eval architecture (case format, runner, reporting) to carry both graders
 - Prompt caching, context management, step and budget guards
 - Evals run on every prompt or model change
 
