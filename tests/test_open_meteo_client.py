@@ -3,7 +3,6 @@ import pytest
 
 from sasoi.open_meteo_client import OpenMeteoClient, OpenMeteoError, Place, WeatherHour
 
-
 A_PLACE = "Bilbao"
 A_COUNT = 3
 
@@ -44,7 +43,11 @@ class TestOpenMeteoClient:
         open_meteo = client(
             lambda _: httpx.Response(
                 200,
-                json={"results": [{"name": "Antarctica", "latitude": -75.0, "longitude": 0.0, "timezone": "Antarctica/Troll"}]},
+                json={
+                    "results": [
+                        {"name": "Antarctica", "latitude": -75.0, "longitude": 0.0, "timezone": "Antarctica/Troll"}
+                    ]
+                },
             )
         )
 
@@ -97,7 +100,9 @@ class TestOpenMeteoClient:
         ]
 
     def test_raises_error_with_reason_on_error_response(self):
-        open_meteo = client(lambda _: httpx.Response(400, json={"error": True, "reason": "Parameter 'name' is missing"}))
+        open_meteo = client(
+            lambda _: httpx.Response(400, json={"error": True, "reason": "Parameter 'name' is missing"})
+        )
 
         with pytest.raises(OpenMeteoError, match="Open-Meteo error 400: Parameter 'name' is missing"):
             open_meteo.search_places(A_PLACE, A_COUNT)

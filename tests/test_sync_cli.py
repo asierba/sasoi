@@ -29,7 +29,9 @@ class TestLoadConfig:
         assert str(raised.value) == "SASOI_GARMIN_LIMIT is not set"
 
     def test_accepts_a_garmin_limit_of_1000(self):
-        config = load_config({"DATABASE_URL": A_DATABASE_URL, "SASOI_GARMIN_LIMIT": "1000", "SASOI_LOG_LEVEL": A_LOG_LEVEL})
+        config = load_config(
+            {"DATABASE_URL": A_DATABASE_URL, "SASOI_GARMIN_LIMIT": "1000", "SASOI_LOG_LEVEL": A_LOG_LEVEL}
+        )
 
         assert config.garmin_limit == 1000
 
@@ -59,6 +61,8 @@ class TestLoadConfig:
 
     def test_rejects_when_log_level_is_not_a_logging_level(self):
         with pytest.raises(SettingError) as raised:
-            load_config({"DATABASE_URL": A_DATABASE_URL, "SASOI_GARMIN_LIMIT": A_GARMIN_LIMIT, "SASOI_LOG_LEVEL": "LOUD"})
+            load_config(
+                {"DATABASE_URL": A_DATABASE_URL, "SASOI_GARMIN_LIMIT": A_GARMIN_LIMIT, "SASOI_LOG_LEVEL": "LOUD"}
+            )
 
         assert str(raised.value) == "SASOI_LOG_LEVEL LOUD is not a logging level"

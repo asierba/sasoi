@@ -6,7 +6,6 @@ from sasoi.open_meteo_client import OpenMeteoError, WeatherHour
 from sasoi.tools.tool import ToolError
 from sasoi.tools.weather_history import weather_history
 
-
 AN_INPUT = {"latitude": 43.263, "longitude": -2.935, "start": "2026-10-14T20:00", "end": "2026-10-15T06:00"}
 
 

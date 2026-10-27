@@ -6,7 +6,6 @@ from sasoi.open_meteo_client import OpenMeteoError, Place
 from sasoi.tools.geocode import geocode
 from sasoi.tools.tool import ToolError
 
-
 A_PLACE = "Bilbao"
 
 

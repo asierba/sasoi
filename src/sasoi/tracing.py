@@ -1,7 +1,7 @@
 import json
-from dataclasses import asdict
 import time
 from collections.abc import Callable
+from dataclasses import asdict
 from typing import TextIO
 
 from sasoi.agent import ChatClient, Tools
@@ -47,9 +47,7 @@ class TracedClient:
 
     def _record(self, request: Request, start: float, outcome: dict) -> None:
         duration_ms = (self._timer() - start) * 1000
-        self._tracer.record(
-            {"type": "claude_call", **asdict(request), **outcome, "duration_ms": duration_ms}
-        )
+        self._tracer.record({"type": "claude_call", **asdict(request), **outcome, "duration_ms": duration_ms})
 
 
 class TracedSleep:

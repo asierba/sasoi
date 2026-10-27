@@ -19,10 +19,16 @@ sasoi-eval = "sasoi.eval_cli:main"
 
 [dependency-groups]
 dev = [
+    "pre-commit>=4.7.0",
     "pytest>=8",
+    "ruff>=0.17.3",
     "time-machine>=3.5.1",
 ]
 
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
+
+[tool.ruff]
+line-length = 120
+extend-exclude = ["scripts"]

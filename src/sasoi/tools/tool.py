@@ -16,4 +16,3 @@ class Tool:
     @property
     def definition(self) -> dict:
         return {"name": self.name, "description": self.description, "input_schema": self.input_schema}
-

@@ -36,4 +36,3 @@ def geocode(open_meteo: PlaceSearch) -> Tool:
         },
         run=run,
     )
-

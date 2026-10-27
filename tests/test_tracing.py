@@ -53,7 +53,9 @@ class TestTracedClient:
         reply = Reply([{"type": "text", "text": "Hi!"}], "end_turn", Usage(input_tokens=12, output_tokens=5))
         client = TracedClient(FakeClient(reply), Tracer(sink), timer(1.0, 1.25))
 
-        returned = client.send(Request("Today is Tuesday.", [{"role": "user", "content": "hello"}], [{"name": "current_time"}]))
+        returned = client.send(
+            Request("Today is Tuesday.", [{"role": "user", "content": "hello"}], [{"name": "current_time"}])
+        )
 
         assert returned == reply
         assert recorded(sink) == [

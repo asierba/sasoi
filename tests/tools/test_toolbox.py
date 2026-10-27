@@ -1,7 +1,6 @@
 from sasoi.tools.tool import Tool, ToolError
 from sasoi.tools.toolbox import Toolbox
 
-
 A_DESCRIPTION = "Does something"
 AN_INPUT_SCHEMA = {"type": "object"}
 

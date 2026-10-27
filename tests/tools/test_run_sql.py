@@ -56,6 +56,8 @@ class TestRunSql:
         assert tool.run({"query": "SELECT 1 AS n"}) == "n\n1\n(1 rows)"
 
     def test_describes_the_schema(self, conn):
-        assert run_sql(conn, "garmin_runs: One row per run.").definition["description"].endswith(
-            "Schema:\n\ngarmin_runs: One row per run."
+        assert (
+            run_sql(conn, "garmin_runs: One row per run.")
+            .definition["description"]
+            .endswith("Schema:\n\ngarmin_runs: One row per run.")
         )

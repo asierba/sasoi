@@ -47,6 +47,13 @@ uv run pytest
 
 Database tests run against the `postgres-test` compose service (in-memory, port 5433) via `TEST_DATABASE_URL`; they fail when it is not set.
 
+## Lint and format
+
+```sh
+uv run ruff check --fix .
+uv run ruff format .
+```
+
 ## Architecture
 
 See [docs/architecture.excalidraw](docs/architecture.excalidraw) (open with [Excalidraw](https://excalidraw.com)).

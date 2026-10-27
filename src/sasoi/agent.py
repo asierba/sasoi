@@ -4,7 +4,6 @@ from typing import Protocol
 from sasoi.claude_client import ClaudeError, Reply, Request, Usage
 from sasoi.conversation import Conversation
 
-
 FINAL_STOP_REASONS = {"end_turn", "stop_sequence"}
 
 

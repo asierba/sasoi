@@ -5,7 +5,6 @@ import pytest
 
 from sasoi.claude_client import ClaudeApiError, ClaudeClient, ClaudeConnectionError, Reply, Request, Usage
 
-
 A_KEY = "test-key"
 A_MODEL = "test-model"
 A_MESSAGES = [{"role": "user", "content": "hi"}]
@@ -31,7 +30,9 @@ class TestClaudeClient:
 
         http = httpx.Client(transport=httpx.MockTransport(handler))
 
-        reply = ClaudeClient("test-key", "test-model", http).send(Request("Today is Tuesday.", [{"role": "user", "content": "hi"}], []))
+        reply = ClaudeClient("test-key", "test-model", http).send(
+            Request("Today is Tuesday.", [{"role": "user", "content": "hi"}], [])
+        )
 
         request = captured["request"]
         assert str(request.url) == "https://api.anthropic.com/v1/messages"

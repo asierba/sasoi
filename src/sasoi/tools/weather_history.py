@@ -8,7 +8,9 @@ from sasoi.tools.tool import Tool, ToolError
 
 
 class WeatherArchive(Protocol):
-    def hourly_weather(self, latitude: float, longitude: float, start_date: str, end_date: str) -> list[WeatherHour]: ...
+    def hourly_weather(
+        self, latitude: float, longitude: float, start_date: str, end_date: str
+    ) -> list[WeatherHour]: ...
 
 
 def weather_history(open_meteo: WeatherArchive) -> Tool:
