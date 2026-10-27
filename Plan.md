@@ -94,7 +94,7 @@ Phase 0 runs on the laptop; by the end of phase 1 the same containers move to an
   - [x] ~~Honour the `retry-after` header on 429~~
   - [x] ~~Tokens and cost per turn~~
 - [x] ~~Data access spike (go/no-go). If a route fails, step down the ladder: API, then export files, then screenshots read by a vision model.~~
-  - [x] ~~Garmin: fetch a recent run with laps, heart rate and per-second streams through the unofficial Garmin Connect API (`scripts/garmin_spike.py`); later runs reuse the saved token without logging in again~~
+  - [x] ~~Garmin: fetch a recent run with laps, heart rate and per-second streams through the unofficial Garmin Connect API; later runs reuse the saved token without logging in again~~
   - [x] ~~Hevy: export workouts to CSV and check it has sets, reps, weight and dates~~
   - [x] ~~Hevy private web API: fetch every workout with the web app's bearer token (`scripts/hevy_spike.py`); all 72 workouts and 1363 sets match the CSV~~
   - [x] ~~Check whether Hevy workouts also reach Garmin Connect: no native sync, as Garmin refused Hevy API access; third-party sync (hevy2garmin) needs Hevy Pro, which would give direct API access anyway~~
