@@ -104,6 +104,8 @@ Phase 0 runs on the laptop; by the end of phase 1 the same containers move to an
   - [x] ~~First evals: 15–20 real questions about runs, each with a hand-written SQL query as ground truth; run the agent and read every trace~~
   - [x] ~~`/feedback-run` chat command: a saved prompt for feedback on my last run~~
 - [x] ~~Athlete profile: a gitignored markdown file with my weekly session budget (runs and lifts combined), goals and constraints, loaded into the prompt so recommendations fit it~~
+- [ ] Fix the Hevy spike script (`scripts/hevy_spike.py`)
+- [ ] Evals review: compare the eval setup with the [AI evals FAQ](https://hamel.dev/blog/posts/evals-faq/) and list the fixes
 - [ ] Hevy foundation: the same path for strength, on top of the Garmin one
   - [ ] Ingestion: all workouts pulled into Postgres
   - [ ] Data tools: Hevy tables added to the schema description
