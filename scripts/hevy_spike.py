@@ -1,27 +1,43 @@
 #!/usr/bin/env -S uv run --script
 # /// script
-# dependencies = ["httpx", "python-dotenv"]
+# dependencies = ["httpx"]
 # ///
 import json
-import os
 from pathlib import Path
 
 import httpx
-from dotenv import load_dotenv
 
 OUT = Path("data/hevy/workouts.json")
+TOKENS = Path("data/hevy/tokens.json")
 API = "https://api.hevyapp.com"
 HEADERS = {"x-api-key": "shelobs_hevy_web", "hevy-platform": "web"}
 
 
-def login():
-    credentials = {"emailOrUsername": os.environ["HEVY_EMAIL"], "password": os.environ["HEVY_PASSWORD"]}
-    response = httpx.post(f"{API}/login", headers=HEADERS, json=credentials).raise_for_status()
-    return response.json()["auth_token"]
+def stored_tokens():
+    if TOKENS.exists():
+        return json.loads(TOKENS.read_text())
+    return {"access_token": input("access_token: ").strip(), "refresh_token": input("refresh_token: ").strip()}
 
 
-def client():
-    return httpx.Client(base_url=API, headers={**HEADERS, "authorization": f"Bearer {login()}"})
+def save_tokens(tokens):
+    TOKENS.parent.mkdir(parents=True, exist_ok=True)
+    TOKENS.write_text(json.dumps(tokens, indent=2))
+    TOKENS.chmod(0o600)
+
+
+def refreshed(tokens):
+    response = httpx.post(
+        f"{API}/auth/refresh_token",
+        headers={**HEADERS, "authorization": f"Bearer {tokens['access_token']}"},
+        json={"refresh_token": tokens["refresh_token"]},
+    )
+    if response.is_error:
+        raise SystemExit(f"token refresh failed: {response.status_code} {response.text}")
+    return response.json()
+
+
+def client(access_token):
+    return httpx.Client(base_url=API, headers={**HEADERS, "authorization": f"Bearer {access_token}"})
 
 
 def fetch_all(http):
@@ -34,8 +50,10 @@ def fetch_all(http):
 
 
 def main():
-    load_dotenv(".env")
-    with client() as http:
+    tokens = refreshed(stored_tokens())
+    save_tokens(tokens)
+    print(f"access token expires at: {tokens.get('expires_at')}")
+    with client(tokens["access_token"]) as http:
         count = http.get("/workout_count").raise_for_status().json()["workout_count"]
         workouts = fetch_all(http)
     OUT.parent.mkdir(parents=True, exist_ok=True)

@@ -33,7 +33,7 @@ A single-user, self-hosted training assistant. The most valuable feature is auto
 | Garmin (runs) | Unofficial Garmin Connect API through the `garminconnect` library: logs in as me, saved token reused; polled | Free; preferred route; data stays on my machine; against Garmin's terms and can break when Garmin changes its login |
 | Garmin (fallback) | Intervals.icu API: a free account syncs from Garmin Connect; personal API key; polled | Free; a third party holds full GPS tracks (home location) and, later, health stats |
 | Garmin (fallback) | FIT export from Garmin Connect, dropped into a watched folder | Free, manual |
-| Hevy (strength) | Private web API (`api.hevyapp.com`) with my login's bearer token; polled | Free; preferred route; same data as the CSV plus IDs, UTC times and exercise template IDs; not documented or authorised by Hevy; the token dies on logout and renewing it is unsolved |
+| Hevy (strength) | Private web API (`api.hevyapp.com`) with my login's bearer token; polled | Free; preferred route; same data as the CSV plus IDs, UTC times and exercise template IDs; not documented or authorised by Hevy; a token pair copied once from the web app is renewed with `/auth/refresh_token`; the session dies on logout |
 | Hevy (fallback) | CSV export from the app (Settings, Export & Import Data) | Free, manual |
 | Hevy (automated) | Official API with a key from Hevy Pro; polled | $2.99/month; only once strength feedback earns it |
 | Strava | Not used | API Policy (2026) §5.3 bans Strava data, even stored or derived, from any AI application, including a model's context window; the allowed Strava MCP needs a subscription; worse data than Garmin and no structured strength sets |
@@ -104,7 +104,7 @@ Phase 0 runs on the laptop; by the end of phase 1 the same containers move to an
   - [x] ~~First evals: 15–20 real questions about runs, each with a hand-written SQL query as ground truth; run the agent and read every trace~~
   - [x] ~~`/feedback-run` chat command: a saved prompt for feedback on my last run~~
 - [x] ~~Athlete profile: a gitignored markdown file with my weekly session budget (runs and lifts combined), goals and constraints, loaded into the prompt so recommendations fit it~~
-- [ ] Fix the Hevy spike script (`scripts/hevy_spike.py`)
+- [x] ~~Fix the Hevy spike script (`scripts/hevy_spike.py`): `/login` needs a reCAPTCHA token, so the script renews a token pair copied once from the web app with `/auth/refresh_token`~~
 - [ ] Evals review: compare the eval setup with the [AI evals FAQ](https://hamel.dev/blog/posts/evals-faq/) and list the fixes
 - [ ] Hevy foundation: the same path for strength, on top of the Garmin one
   - [ ] Ingestion: all workouts pulled into Postgres
@@ -163,7 +163,7 @@ Phase 0 runs on the laptop; by the end of phase 1 the same containers move to an
 **Build:**
 
 - Strength context pack: volume, top sets, estimated 1RM, comparison with recent sessions
-- Input: the Hevy private API once token renewal is solved, or the Pro API if it is worth paying for; a fresh CSV export dropped in a folder until then
+- Input: the Hevy private API with a renewed token pair, or the Pro API if it is worth paying for
 - Strength cases added to the feedback evals
 
 **Ships:** feedback after every strength session.
@@ -279,10 +279,10 @@ Going deeper, such as training models from scratch, is a separate decision for l
 | Item | Type | Decide by | Notes |
 | --- | --- | --- | --- |
 | Garmin data access | Risk | Ongoing | Unofficial Garmin Connect API confirmed in the spike, but login hit a Cloudflare block and rate limiting before MFA got through; Garmin may break it at any time; fallbacks: Intervals.icu or FIT export from Garmin Connect, then screenshots read by a vision model |
-| Hevy data access | Risk | Ongoing | Private web API confirmed in the spike, but the bearer token dies on logout and how to get a new one is unknown; Hevy may block it at any time; fallbacks: Pro API, CSV export, then screenshots |
+| Hevy data access | Risk | Ongoing | Private web API confirmed in the spike; `/auth/refresh_token` renews the token pair, even after the 15-minute access token expires, but the refresh token's lifetime is unknown and the session dies on logout; Hevy may block it at any time; fallbacks: Pro API, CSV export, then screenshots |
 | Always-on host | Decision | End of phase 1 | Needed for triggers and the web chat; leaning to a cheap VPS (no spare machine at home); compare providers when deciding, as prices moved a lot in 2026. Later, if the project proves its value, move to a Raspberry Pi or similar cheap home machine |
 | Tracing tool | Decision | End of phase 1 | Depends on the always-on host: self-hosted on it (e.g. Phoenix, Langfuse) vs SaaS; traces contain health data. JSONL files plus `scripts/trace.sh` until then; OpenTelemetry keeps the backend swappable |
 | Athlete profile in production | Decision | End of phase 1 | Personal data that sync cannot rebuild, so it needs a source of truth outside the host that CI can deploy from. CI secret (one `gh secret set` per change, but cannot be read back) vs encrypted in the repo with sops and age (versioned, more tooling). Not plain in the repo or a seed migration: no personal data in the codebase |
-| Hevy access route | Decision | End of phase 3 | Private API (needs automatic token renewal) vs Hevy Pro at $2.99/month; keep Pro only if it earns it |
+| Hevy access route | Decision | End of phase 3 | Private API (if the refresh token keeps working) vs Hevy Pro at $2.99/month; keep Pro only if it earns it |
 | Jev spike | Decision | End of phase 7 | Discriminative model vs an LLM; candidate use: classifying run type for plan matching |
 | Local models | Decision | End of phase 9 | Which steps can run on Ollama |
