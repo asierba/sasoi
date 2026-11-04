@@ -9,7 +9,7 @@ import httpx
 import psycopg
 from dotenv import load_dotenv
 
-from sasoi.app import Config, load_config
+from sasoi.app import Config, load_config_for_evals
 from sasoi.evals.cases import Case, load_cases
 from sasoi.evals.evaluator import Evaluator
 from sasoi.evals.grading import Grade
@@ -50,7 +50,7 @@ def _args() -> argparse.Namespace:
 
 def _config() -> Config:
     try:
-        return load_config(os.environ)
+        return load_config_for_evals(os.environ)
     except SettingError as error:
         raise SystemExit(f"Error: {error}") from error
 

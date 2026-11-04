@@ -19,7 +19,7 @@ uv run pyright                            # type check src and tests
 scripts/trace.sh [--full] [trace.jsonl]   # follow latest trace; --full skips truncating tool results
 ```
 
-Env: `.env` loaded by `cli.main`; `SASOI_MODEL` picks the model (required, no default in code).
+Env: `.env` loaded by `cli.main`; `SASOI_MODEL` picks the chat model and `SASOI_EVAL_MODEL` the eval model (both required, no default in code).
 
 ## Architecture
 

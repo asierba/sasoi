@@ -35,9 +35,17 @@ _ATHLETE_PROFILE_PATH = Path("data/athlete_profile.md")
 
 
 def load_config(env: Mapping[str, str]) -> Config:
+    return _load_config(env, "SASOI_MODEL")
+
+
+def load_config_for_evals(env: Mapping[str, str]) -> Config:
+    return _load_config(env, "SASOI_EVAL_MODEL")
+
+
+def _load_config(env: Mapping[str, str], model_setting: str) -> Config:
     return Config(
         required(env, "ANTHROPIC_API_KEY"),
-        required(env, "SASOI_MODEL"),
+        required(env, model_setting),
         required(env, "READER_DATABASE_URL"),
         _athlete_profile(_ATHLETE_PROFILE_PATH),
     )

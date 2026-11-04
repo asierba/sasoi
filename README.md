@@ -20,7 +20,7 @@ uv run sasoi
 
 Type a message at the `>` prompt. Ctrl-D exits.
 
-`SASOI_MODEL` in `.env` picks the Claude model.
+`SASOI_MODEL` in `.env` picks the Claude model. `SASOI_EVAL_MODEL` picks the model `sasoi-eval` runs on; keep it fixed so pass rates stay comparable.
 
 `data/athlete_profile.md` tells the agent your weekly session budget, goals and constraints; every recommendation has to fit it. It is personal, so it is gitignored.
 

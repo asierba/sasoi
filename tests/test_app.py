@@ -1,6 +1,6 @@
 import pytest
 
-from sasoi.app import Config, load_config
+from sasoi.app import Config, load_config, load_config_for_evals
 from sasoi.settings import SettingError
 
 AN_API_KEY = "an api key"
@@ -47,3 +47,29 @@ class TestLoadConfig:
         )
 
         assert config == Config("key", "claude-test", "postgresql://db/sasoi", "Up to 4 sessions a week.")
+
+
+class TestLoadConfigForEvals:
+    def test_rejects_with_message_when_eval_model_missing(self):
+        with pytest.raises(SettingError) as raised:
+            load_config_for_evals(
+                {"ANTHROPIC_API_KEY": AN_API_KEY, "SASOI_MODEL": A_MODEL, "READER_DATABASE_URL": A_READER_DATABASE_URL}
+            )
+
+        assert str(raised.value) == "SASOI_EVAL_MODEL is not set"
+
+    def test_reads_model_from_eval_model(self, tmp_path, monkeypatch):
+        monkeypatch.chdir(tmp_path)
+        (tmp_path / "data").mkdir()
+        (tmp_path / "data/athlete_profile.md").write_text("Up to 4 sessions a week.")
+
+        config = load_config_for_evals(
+            {
+                "ANTHROPIC_API_KEY": "key",
+                "SASOI_MODEL": "claude-chat",
+                "SASOI_EVAL_MODEL": "claude-eval",
+                "READER_DATABASE_URL": "postgresql://db/sasoi",
+            }
+        )
+
+        assert config == Config("key", "claude-eval", "postgresql://db/sasoi", "Up to 4 sessions a week.")
