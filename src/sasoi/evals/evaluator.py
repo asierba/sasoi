@@ -38,7 +38,9 @@ class Evaluator:
 
     def _ask(self, question: str, trace_path: Path) -> None:
         with trace_path.open("w") as trace_file:
-            build_agent(self._config, self._http, self._db, Tracer(trace_file)).ask(question)
+            tracer = Tracer(trace_file)
+            tracer.record_session(self._config.model)
+            build_agent(self._config, self._http, self._db, tracer).ask(question)
 
 
 def _read_trace_events(trace_path: Path) -> list[dict]:

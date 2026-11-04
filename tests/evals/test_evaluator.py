@@ -86,3 +86,13 @@ class TestEvaluate:
         Evaluator(A_CONFIG, http, reader, tmp_path).evaluate(Case("a-case", A_QUESTION, "SELECT 1"))
 
         assert [path.name for path in tmp_path.iterdir()] == ["a-case.jsonl"]
+
+    def test_starts_the_case_trace_with_the_model(self, reader, tmp_path):
+        http = a_claude(a_final_reply())
+        config = Config("a-key", "claude-eval", "postgresql://unused", "an athlete profile")
+
+        Evaluator(config, http, reader, tmp_path).evaluate(Case("a-case", A_QUESTION, "SELECT 1"))
+
+        first_event = json.loads((tmp_path / "a-case.jsonl").read_text().splitlines()[0])
+        assert first_event["type"] == "session"
+        assert first_event["model"] == "claude-eval"
