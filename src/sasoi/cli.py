@@ -15,7 +15,7 @@ from rich.markdown import Markdown
 
 from sasoi.agent import Answer
 from sasoi.app import Config, build_agent, load_config
-from sasoi.claude_client import MAX_TOKENS, ClaudeError
+from sasoi.claude_client import ClaudeError
 from sasoi.pricing import PRICES, Price
 from sasoi.settings import SettingError
 from sasoi.tracing import Tracer
@@ -42,7 +42,7 @@ def main() -> None:
         _trace_file() as trace_file,
     ):
         tracer = Tracer(trace_file)
-        tracer.record({"type": "session", "model": config.model, "max_tokens": MAX_TOKENS})
+        tracer.record_session(config.model)
         agent = build_agent(config, http, db, tracer)
         session = PromptSession(
             completer=WordCompleter(list(agent.commands), meta_dict=agent.commands, sentence=True), style=PROMPT_STYLE

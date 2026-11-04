@@ -5,7 +5,7 @@ from dataclasses import asdict
 from typing import TextIO
 
 from sasoi.agent import ChatClient, Tools
-from sasoi.claude_client import ClaudeApiError, ClaudeError, Reply, Request
+from sasoi.claude_client import MAX_TOKENS, ClaudeApiError, ClaudeError, Reply, Request
 
 Timer = Callable[[], float]
 
@@ -17,6 +17,9 @@ class Tracer:
     def record(self, event: dict) -> None:
         self._sink.write(json.dumps(event, ensure_ascii=False) + "\n")
         self._sink.flush()
+
+    def record_session(self, model: str) -> None:
+        self.record({"type": "session", "model": model, "max_tokens": MAX_TOKENS})
 
 
 def error_outcome(error: ClaudeError) -> dict:

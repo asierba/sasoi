@@ -3,7 +3,7 @@ import json
 
 import pytest
 
-from sasoi.claude_client import ClaudeApiError, Reply, Request, Usage
+from sasoi.claude_client import MAX_TOKENS, ClaudeApiError, Reply, Request, Usage
 from sasoi.tools.tool import Tool, ToolError
 from sasoi.tools.toolbox import Toolbox
 from sasoi.tracing import TracedClient, TracedSleep, TracedToolbox, Tracer
@@ -45,6 +45,13 @@ class TestTracer:
         tracer.record({"type": "second"})
 
         assert sink.getvalue() == '{"type": "first"}\n{"type": "second"}\n'
+
+    def test_records_session_with_model_and_max_tokens(self):
+        sink = io.StringIO()
+
+        Tracer(sink).record_session("claude-test")
+
+        assert recorded(sink) == [{"type": "session", "model": "claude-test", "max_tokens": MAX_TOKENS}]
 
 
 class TestTracedClient:
