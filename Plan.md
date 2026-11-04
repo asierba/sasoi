@@ -146,8 +146,14 @@ Phase 0 runs on the laptop; by the end of phase 1 the same containers move to an
 
 **Build:**
 
+- Pre-refactor, before any web code: revisit the architecture so the CLI and the web share one core; likely a light hexagonal architecture (ports and adapters)
+- Revisit the tests:
+  - Goal: Mostly integration tests that fake only the boundaries (Claude API, Garmin, Hevy, Postgres where it makes sense)
+  - Trial mutation testing
+  - Consider property testing
 - Streaming in the agent loop, used by both the CLI and the web chat
 - Minimal web app on the always-on host: one chat page with streaming and a list of past conversations
+- Frontend state machines with XState: try them for the chat UI states
 - A "Discuss this run" link in each feedback email that opens a new conversation loaded with that session's context pack
 - Conversations stored in the same Postgres database
 - Access through Tailscale, not exposed publicly
