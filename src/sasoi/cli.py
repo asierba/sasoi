@@ -13,6 +13,7 @@ from prompt_toolkit.application import get_app
 from prompt_toolkit.completion import WordCompleter
 from prompt_toolkit.filters import Condition
 from prompt_toolkit.key_binding import KeyBindings, KeyPressEvent
+from prompt_toolkit.keys import Keys
 from prompt_toolkit.styles import Style
 from rich.markdown import Markdown
 
@@ -75,8 +76,7 @@ def _trace_file() -> TextIO:
 def line_break_bindings() -> KeyBindings:
     bindings = KeyBindings()
     bindings.add("enter", filter=_backslash_before_cursor)(_replace_backslash_with_line_break)
-    # VS Code sends shift+enter as backslash, CR, LF: without this the LF would submit the prompt
-    bindings.add("c-j")(lambda event: None)
+    bindings.add("c-j")(_insert_line_break_unless_after_enter)
     return bindings
 
 
@@ -87,6 +87,16 @@ def _backslash_before_cursor() -> bool:
 
 def _replace_backslash_with_line_break(event: KeyPressEvent) -> None:
     event.current_buffer.delete_before_cursor()
+    _insert_line_break(event)
+
+
+def _insert_line_break_unless_after_enter(event: KeyPressEvent) -> None:
+    # VS Code sends shift+enter as backslash, CR, LF: the CR already added the line break
+    if [press.key for press in event.previous_key_sequence] != [Keys.ControlM]:
+        _insert_line_break(event)
+
+
+def _insert_line_break(event: KeyPressEvent) -> None:
     event.current_buffer.insert_text("\n")
 
 

@@ -165,5 +165,8 @@ class TestLineBreakBindings:
     def test_backslash_then_enter_adds_a_line_break(self):
         assert prompted("first line\\\rsecond line\r") == "first line\nsecond line"
 
+    def test_shift_enter_from_iterm_adds_a_line_break(self):
+        assert prompted("first line\nsecond line\r") == "first line\nsecond line"
+
     def test_enter_submits_the_prompt(self):
         assert prompted("a line\rignored") == "a line"
