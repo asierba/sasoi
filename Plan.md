@@ -53,7 +53,7 @@ flowchart LR
     fit["FIT drop folder<br/>fallback"]
     claude["Claude Messages API"]
 
-    subgraph docker["Docker: laptop now, always-on host from phase 1"]
+    subgraph docker["Docker: laptop now, always-on host from phase 2"]
         sync["Sync job<br/>poll every 15 min"]
         pg[("Postgres<br/>all data")]
         chat["Chat<br/>CLI, then web"]
@@ -74,7 +74,7 @@ flowchart LR
     agent <--> claude
 ```
 
-Phase 0 runs on the laptop; by the end of phase 1 the same containers move to an always-on host (likely a cheap VPS) so feedback arrives without the laptop being on. From phase 2, the web chat stores conversations in the same Postgres database. Every model and tool call in the agent core is traced. Feedback is a fixed workflow so every email is consistent; chat is an agent loop because its questions are open-ended.
+Phases 0 and 1 run on the laptop; by the end of phase 2 the same containers move to an always-on host (likely a cheap VPS) so feedback arrives without the laptop being on. From phase 1, the web chat stores conversations in the same Postgres database. Every model and tool call in the agent core is traced. Feedback is a fixed workflow so every email is consistent; chat is an agent loop because its questions are open-ended.
 
 ## Roadmap
 
@@ -117,7 +117,29 @@ Phase 0 runs on the laptop; by the end of phase 1 the same containers move to an
 
 **Done when:** data access is confirmed, and I have a baseline eval score and a list of failure categories.
 
-### Phase 1 · Run feedback
+### Phase 1 · Web chat
+
+**Goal:** talk to the assistant from my phone.
+
+**Build:**
+
+- Pre-refactor, before any web code: revisit the architecture so the CLI and the web share one core; likely a light hexagonal architecture (ports and adapters)
+- Revisit the tests:
+  - Goal: Mostly integration tests that fake only the boundaries (Claude API, Garmin, Hevy, Postgres where it makes sense)
+  - Trial mutation testing
+  - Consider property testing
+- Streaming in the agent loop, used by both the CLI and the web chat
+- Minimal web app, local first: runs on the laptop; one chat page with streaming and a list of past conversations
+- Frontend state machines with XState: try them for the chat UI states
+- Conversations stored in the same Postgres database
+- Access from the phone through Tailscale to the laptop, not exposed publicly
+- Eval cases for follow-up questions that start from a session
+
+**Ships:** a web chat on my laptop that I can open from my phone.
+
+**Done when:** after a run, I sync and then ask follow-up questions about that run from my phone.
+
+### Phase 2 · Run feedback
 
 **Goal:** an email after every run, with no manual step.
 
@@ -134,34 +156,12 @@ Phase 0 runs on the laptop; by the end of phase 1 the same containers move to an
 - Garmin login without interaction (no MFA prompt) on the host
 - Database passwords (owner and `sasoi_reader`) set from secrets on the host, not hardcoded in the compose file and migrations
 - Athlete profile in production: CI writes `data/athlete_profile.md` on every deploy, with no SSH or manual step; never committed in plain text (see open decisions)
+- A "Discuss this run" link in each feedback email that opens a new conversation loaded with that session's context pack
 - Tracing tool with a browser UI, replacing the JSONL traces (see open decisions)
 
-**Ships:** feedback in my inbox after every run.
+**Ships:** feedback in my inbox after every run, with a link to discuss it in the web chat.
 
 **Done when:** three real runs in a row produce correct feedback without me touching anything.
-
-### Phase 2 · Web chat
-
-**Goal:** talk to the assistant from my phone, starting from any session's feedback.
-
-**Build:**
-
-- Pre-refactor, before any web code: revisit the architecture so the CLI and the web share one core; likely a light hexagonal architecture (ports and adapters)
-- Revisit the tests:
-  - Goal: Mostly integration tests that fake only the boundaries (Claude API, Garmin, Hevy, Postgres where it makes sense)
-  - Trial mutation testing
-  - Consider property testing
-- Streaming in the agent loop, used by both the CLI and the web chat
-- Minimal web app on the always-on host: one chat page with streaming and a list of past conversations
-- Frontend state machines with XState: try them for the chat UI states
-- A "Discuss this run" link in each feedback email that opens a new conversation loaded with that session's context pack
-- Conversations stored in the same Postgres database
-- Access through Tailscale, not exposed publicly
-- Eval cases for follow-up questions that start from a session
-
-**Ships:** a web chat I can open from a feedback email on my phone.
-
-**Done when:** I can tap the link in a run's email and ask follow-up questions about that run from my phone.
 
 ### Phase 3 · Strength feedback
 
@@ -287,9 +287,9 @@ Going deeper, such as training models from scratch, is a separate decision for l
 | --- | --- | --- | --- |
 | Garmin data access | Risk | Ongoing | Unofficial Garmin Connect API confirmed in the spike, but login hit a Cloudflare block and rate limiting before MFA got through; Garmin may break it at any time; fallbacks: Intervals.icu or FIT export from Garmin Connect, then screenshots read by a vision model |
 | Hevy data access | Risk | Ongoing | Private web API confirmed in the spike; `/auth/refresh_token` renews the token pair, even after the 15-minute access token expires, but the refresh token's lifetime is unknown and the session dies on logout; Hevy may block it at any time; fallbacks: Pro API, CSV export, then screenshots |
-| Always-on host | Decision | End of phase 1 | Needed for triggers and the web chat; leaning to a cheap VPS (no spare machine at home); compare providers when deciding, as prices moved a lot in 2026. Later, if the project proves its value, move to a Raspberry Pi or similar cheap home machine |
-| Tracing tool | Decision | End of phase 1 | Depends on the always-on host: self-hosted on it (e.g. Phoenix, Langfuse) vs SaaS; traces contain health data. JSONL files plus `scripts/trace.sh` until then; OpenTelemetry keeps the backend swappable |
-| Athlete profile in production | Decision | End of phase 1 | Personal data that sync cannot rebuild, so it needs a source of truth outside the host that CI can deploy from. CI secret (one `gh secret set` per change, but cannot be read back) vs encrypted in the repo with sops and age (versioned, more tooling). Not plain in the repo or a seed migration: no personal data in the codebase |
+| Always-on host | Decision | End of phase 2 | Needed for triggers and the web chat; leaning to a cheap VPS (no spare machine at home); compare providers when deciding, as prices moved a lot in 2026. Later, if the project proves its value, move to a Raspberry Pi or similar cheap home machine |
+| Tracing tool | Decision | End of phase 2 | Depends on the always-on host: self-hosted on it (e.g. Phoenix, Langfuse) vs SaaS; traces contain health data. JSONL files plus `scripts/trace.sh` until then; OpenTelemetry keeps the backend swappable |
+| Athlete profile in production | Decision | End of phase 2 | Personal data that sync cannot rebuild, so it needs a source of truth outside the host that CI can deploy from. CI secret (one `gh secret set` per change, but cannot be read back) vs encrypted in the repo with sops and age (versioned, more tooling). Not plain in the repo or a seed migration: no personal data in the codebase |
 | Hevy access route | Decision | End of phase 3 | Private API (if the refresh token keeps working) vs Hevy Pro at $2.99/month; keep Pro only if it earns it |
 | Jev spike | Decision | End of phase 7 | Discriminative model vs an LLM; candidate use: classifying run type for plan matching |
 | Local models | Decision | End of phase 9 | Which steps can run on Ollama |
