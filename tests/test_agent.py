@@ -59,6 +59,16 @@ class TestAgent:
 
         assert client.calls == [[{"role": "user", "content": "the command prompt"}]]
 
+    def test_adds_the_text_after_a_command_as_context(self):
+        client = FakeClient(a_text_reply("a reply"))
+        agent = Agent(Conversation(), client, Toolbox([]), A_SYSTEM_PROMPT, {"/a-command": "the command prompt"})
+
+        agent.ask("/a-command today it was an easy run")
+
+        assert client.calls == [
+            [{"role": "user", "content": "the command prompt\n\nContext: today it was an easy run"}]
+        ]
+
     def test_lists_its_commands_with_their_prompts(self):
         agent = Agent(Conversation(), FakeClient(), Toolbox([]), A_SYSTEM_PROMPT, {"/a-command": "a command prompt"})
 

@@ -51,8 +51,7 @@ class Agent:
         return dict(self._commands)
 
     def ask(self, prompt: str) -> Answer:
-        final_prompt = self._commands.get(prompt, prompt)
-        self._conversation.add_user_message(final_prompt)
+        self._conversation.add_user_message(self._expand(prompt))
         reply = self._send()
         usage = reply.usage
         while reply.stop_reason == "tool_use":
@@ -64,6 +63,13 @@ class Agent:
             raise UnexpectedStopError(reply.stop_reason)
         self._conversation.add_assistant_message(reply.content)
         return Answer(reply.text, usage)
+
+    def _expand(self, prompt: str) -> str:
+        name, _, note = prompt.partition(" ")
+        if name not in self._commands:
+            return prompt
+        command_prompt = self._commands[name]
+        return f"{command_prompt}\n\nContext: {note.strip()}" if note.strip() else command_prompt
 
     def _send(self) -> Reply:
         return self._client.send(Request(self._system_prompt, self._conversation.messages, self._toolbox.definitions))
