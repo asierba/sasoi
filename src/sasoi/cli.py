@@ -16,7 +16,7 @@ from rich.markdown import Markdown
 from sasoi.agent import Answer
 from sasoi.app import Config, build_agent, load_config
 from sasoi.claude_client import ClaudeError
-from sasoi.pricing import PRICES, Price
+from sasoi.pricing import PRICES, Price, usage_summary
 from sasoi.settings import SettingError
 from sasoi.tracing import Tracer
 
@@ -68,9 +68,7 @@ def _trace_file() -> TextIO:
 
 
 def usage_line(answer: Answer, model: str, price: Price | None) -> str:
-    tokens = f"{answer.usage.input_tokens:,} in · {answer.usage.output_tokens:,} out"
-    cost = f" · ${price.cost(answer.usage):.4f}" if price else ""
-    return f"{DIM}{model} · {tokens}{cost}{RESET}"
+    return f"{DIM}{usage_summary(model, answer.usage, price)}{RESET}"
 
 
 def print_markdown(text: str) -> None:

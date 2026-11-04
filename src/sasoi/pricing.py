@@ -21,3 +21,9 @@ PRICES = {
     "claude-sonnet-5-5": Price(2.00, 10.00),
     "claude-opus-5-5": Price(4.00, 20.00),
 }
+
+
+def usage_summary(model: str, usage: Usage, price: Price | None) -> str:
+    tokens = f"{usage.input_tokens:,} in · {usage.output_tokens:,} out"
+    cost = f" · ${price.cost(usage):.4f}" if price else ""
+    return f"{model} · {tokens}{cost}"
