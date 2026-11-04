@@ -2,7 +2,7 @@ import json
 from pathlib import Path
 
 from sasoi.claude_client import Usage
-from sasoi.evals.usage import usage_in_trace_files
+from sasoi.evals.trace_files import usage_in_trace_files
 
 
 def a_trace(path: Path, *events: dict) -> None:

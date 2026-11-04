@@ -14,7 +14,7 @@ from sasoi.evals.cases import Case, load_cases
 from sasoi.evals.evaluator import Evaluator
 from sasoi.evals.grading import Grade
 from sasoi.evals.report import line, pass_rates, summary
-from sasoi.evals.usage import usage_in_trace_files
+from sasoi.evals.trace_files import usage_in_trace_files
 from sasoi.pricing import PRICES, usage_summary
 from sasoi.settings import SettingError
 
