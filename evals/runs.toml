@@ -167,13 +167,13 @@ WHERE activity_id = (
 id = "vo2max-change"
 question = "How has my VO2 max estimate changed over the last year? Give the first and the latest value."
 sql = '''
-(SELECT start_time_local::date::text AS date, vo2max
+(SELECT vo2max
  FROM garmin_runs
  WHERE vo2max IS NOT NULL AND start_time_local >= current_date - interval '1 year'
  ORDER BY start_time_local
  LIMIT 1)
 UNION ALL
-(SELECT start_time_local::date::text, vo2max
+(SELECT vo2max
  FROM garmin_runs
  WHERE vo2max IS NOT NULL
  ORDER BY start_time_local DESC
