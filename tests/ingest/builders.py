@@ -2,6 +2,7 @@ from dataclasses import replace
 from datetime import UTC, datetime
 
 from sasoi.ingest.runs import Lap, Run
+from sasoi.ingest.workouts import Exercise, Workout, WorkoutSet
 
 A_RUN = Run(
     activity_id=1,
@@ -47,6 +48,39 @@ A_LAP = Lap(
     intensity_type="ACTIVE",
 )
 
+A_WORKOUT_SET = WorkoutSet(
+    set_index=0,
+    set_type="normal",
+    weight_kg=20.0,
+    reps=10,
+    duration_s=None,
+    distance_m=None,
+    rpe=None,
+    completed_at_utc=datetime(2024, 1, 2, 18, 10, tzinfo=UTC),
+)
+
+AN_EXERCISE = Exercise(
+    exercise_index=0,
+    title="Goblet Squat",
+    template_id="A1B2C3D4",
+    exercise_type="weight_reps",
+    muscle_group="quadriceps",
+    other_muscles=["glutes"],
+    equipment="dumbbell",
+    superset_id=None,
+    notes=None,
+    sets=[],
+)
+
+A_WORKOUT = Workout(
+    workout_id="00000000-0000-0000-0000-000000000001",
+    name="Full Body A",
+    description=None,
+    start_time_utc=datetime(2024, 1, 2, 18, 0, tzinfo=UTC),
+    end_time_utc=datetime(2024, 1, 2, 19, 0, tzinfo=UTC),
+    exercises=[],
+)
+
 
 def a_run(activity_id: int, **changes) -> Run:
     return replace(A_RUN, activity_id=activity_id, **changes)
@@ -54,3 +88,15 @@ def a_run(activity_id: int, **changes) -> Run:
 
 def a_lap(lap_index: int, **changes) -> Lap:
     return replace(A_LAP, lap_index=lap_index, **changes)
+
+
+def a_workout(workout_id: str, **changes) -> Workout:
+    return replace(A_WORKOUT, workout_id=workout_id, **changes)
+
+
+def an_exercise(exercise_index: int, **changes) -> Exercise:
+    return replace(AN_EXERCISE, exercise_index=exercise_index, **changes)
+
+
+def a_workout_set(set_index: int, **changes) -> WorkoutSet:
+    return replace(A_WORKOUT_SET, set_index=set_index, **changes)

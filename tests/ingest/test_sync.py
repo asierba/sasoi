@@ -1,10 +1,11 @@
 import logging
-from datetime import datetime
+from datetime import UTC, datetime
 
-from builders import a_lap, a_run
+from builders import a_lap, a_run, a_workout
 
 from sasoi.ingest.runs import Lap, Run
-from sasoi.ingest.sync import sync_garmin
+from sasoi.ingest.sync import sync_garmin, sync_hevy
+from sasoi.ingest.workouts import Workout
 
 A_VERY_LARGE_LIMIT = 100000
 
@@ -32,6 +33,25 @@ class FakeStore:
 
     def save_garmin_run(self, run: Run, laps: list[Lap]) -> None:
         self.garmin[run.activity_id] = (run, laps)
+
+
+class FakeWorkoutSource:
+    def __init__(self, workouts: list[Workout]):
+        self._workouts = workouts
+
+    def all_workouts(self) -> list[Workout]:
+        return self._workouts
+
+
+class FakeWorkoutStore:
+    def __init__(self, hevy: dict[str, Workout] | None = None):
+        self.hevy = hevy or {}
+
+    def stored_hevy_ids(self) -> set[str]:
+        return set(self.hevy)
+
+    def save_hevy_workout(self, workout: Workout) -> None:
+        self.hevy[workout.workout_id] = workout
 
 
 class TestSyncGarmin:
@@ -102,4 +122,37 @@ class TestSyncGarmin:
         assert caplog.messages == [
             "garmin: 1 runs listed, 1 new",
             "garmin: saved 1/1 run 1 2024-01-03 07:15:00 (no name)",
+        ]
+
+
+class TestSyncHevy:
+    def test_saves_every_workout_into_an_empty_store(self):
+        store = FakeWorkoutStore()
+
+        new = sync_hevy(FakeWorkoutSource([a_workout("w-1"), a_workout("w-2")]), store)
+
+        assert (new, store.hevy) == (2, {"w-1": a_workout("w-1"), "w-2": a_workout("w-2")})
+
+    def test_keeps_stored_workouts_and_saves_only_new_ones(self):
+        store = FakeWorkoutStore(hevy={"w-1": a_workout("w-1", name="Stored")})
+
+        new = sync_hevy(FakeWorkoutSource([a_workout("w-1", name="Edited"), a_workout("w-2")]), store)
+
+        assert (new, store.hevy) == (1, {"w-1": a_workout("w-1", name="Stored"), "w-2": a_workout("w-2")})
+
+    def test_logs_workouts_listed_and_each_saved_workout(self, caplog):
+        caplog.set_level(logging.INFO, logger="sasoi.ingest.sync")
+        store = FakeWorkoutStore(hevy={"w-1": a_workout("w-1")})
+        source = FakeWorkoutSource(
+            [
+                a_workout("w-1"),
+                a_workout("w-2", start_time_utc=datetime(2024, 1, 2, 18, 0, tzinfo=UTC), name="Full Body A"),
+            ]
+        )
+
+        sync_hevy(source, store)
+
+        assert caplog.messages == [
+            "hevy: 2 workouts listed, 1 new",
+            "hevy: saved 1/1 workout w-2 2024-01-02 18:00:00+00:00 Full Body A",
         ]

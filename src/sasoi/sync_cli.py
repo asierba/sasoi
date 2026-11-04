@@ -6,14 +6,18 @@ from collections.abc import Mapping
 from dataclasses import dataclass
 from pathlib import Path
 
+import httpx
 import psycopg
 from dotenv import load_dotenv
 from yoyo import get_backend, read_migrations
 
 from sasoi.ingest.garmin_login import login as garmin_login
 from sasoi.ingest.garmin_source import MAX_RECENT_RUNS, GarminSource
+from sasoi.ingest.hevy_login import login as hevy_login
+from sasoi.ingest.hevy_source import HevyError
 from sasoi.ingest.postgres_run_store import PostgresRunStore
-from sasoi.ingest.sync import sync_garmin
+from sasoi.ingest.postgres_workout_store import PostgresWorkoutStore
+from sasoi.ingest.sync import sync_garmin, sync_hevy
 from sasoi.settings import SettingError, required
 
 MIGRATIONS_DIR = Path("migrations")
@@ -68,9 +72,25 @@ def main() -> None:
     except SettingError as error:
         raise SystemExit(f"Error: {error}") from error
     configure_logging(config.log_level)
-    started = time.monotonic()
-    log.info("garmin sync started, limit %d", config.garmin_limit)
     migrate(config.database_url)
     with psycopg.connect(config.database_url, autocommit=True) as conn:
-        new_runs = sync_garmin(GarminSource(garmin_login()), PostgresRunStore(conn), config.garmin_limit)
+        _sync_garmin(conn, config.garmin_limit)
+        try:
+            _sync_hevy(conn)
+        except HevyError as error:
+            raise SystemExit(f"Error: {error}") from error
+
+
+def _sync_garmin(conn: psycopg.Connection, limit: int) -> None:
+    started = time.monotonic()
+    log.info("garmin sync started, limit %d", limit)
+    new_runs = sync_garmin(GarminSource(garmin_login()), PostgresRunStore(conn), limit)
     log.info("garmin sync finished: %d new runs in %.0fs", new_runs, time.monotonic() - started)
+
+
+def _sync_hevy(conn: psycopg.Connection) -> None:
+    started = time.monotonic()
+    log.info("hevy sync started")
+    with httpx.Client() as http:
+        new_workouts = sync_hevy(hevy_login(http), PostgresWorkoutStore(conn))
+    log.info("hevy sync finished: %d new workouts in %.0fs", new_workouts, time.monotonic() - started)
