@@ -9,7 +9,10 @@ import psycopg
 import rich
 from dotenv import load_dotenv
 from prompt_toolkit import PromptSession
+from prompt_toolkit.application import get_app
 from prompt_toolkit.completion import WordCompleter
+from prompt_toolkit.filters import Condition
+from prompt_toolkit.key_binding import KeyBindings, KeyPressEvent
 from prompt_toolkit.styles import Style
 from rich.markdown import Markdown
 
@@ -45,7 +48,9 @@ def main() -> None:
         tracer.record_session(config.model)
         agent = build_agent(config, http, db, tracer)
         session = PromptSession(
-            completer=WordCompleter(list(agent.commands), meta_dict=agent.commands, sentence=True), style=PROMPT_STYLE
+            completer=WordCompleter(list(agent.commands), meta_dict=agent.commands, sentence=True),
+            style=PROMPT_STYLE,
+            key_bindings=line_break_bindings(),
         )
         repl(
             agent,
@@ -65,6 +70,24 @@ def _config() -> Config:
 def _trace_file() -> TextIO:
     TRACES_DIR.mkdir(exist_ok=True)
     return (TRACES_DIR / f"{datetime.now():%Y%m%d-%H%M%S}.jsonl").open("w")
+
+
+def line_break_bindings() -> KeyBindings:
+    bindings = KeyBindings()
+    bindings.add("enter", filter=_backslash_before_cursor)(_replace_backslash_with_line_break)
+    # VS Code sends shift+enter as backslash, CR, LF: without this the LF would submit the prompt
+    bindings.add("c-j")(lambda event: None)
+    return bindings
+
+
+@Condition
+def _backslash_before_cursor() -> bool:
+    return get_app().current_buffer.document.text_before_cursor.endswith("\\")
+
+
+def _replace_backslash_with_line_break(event: KeyPressEvent) -> None:
+    event.current_buffer.delete_before_cursor()
+    event.current_buffer.insert_text("\n")
 
 
 def usage_line(answer: Answer, model: str, price: Price | None) -> str:

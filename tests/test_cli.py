@@ -1,6 +1,10 @@
+from prompt_toolkit import PromptSession
+from prompt_toolkit.input import create_pipe_input
+from prompt_toolkit.output import DummyOutput
+
 from sasoi.agent import Answer
 from sasoi.claude_client import ClaudeApiError, Usage
-from sasoi.cli import DIM, GREY, RED, RESET, YELLOW, repl
+from sasoi.cli import DIM, GREY, RED, RESET, YELLOW, line_break_bindings, repl
 from sasoi.pricing import Price
 
 A_USAGE = Usage(input_tokens=1, output_tokens=1)
@@ -146,3 +150,20 @@ class TestRepl:
 
         [_, interrupted, _, second_answer, _, _] = written
         assert [interrupted, second_answer] == [f"{YELLOW}Interrupted{RESET}", "second reply"]
+
+
+def prompted(keys: str) -> str:
+    with create_pipe_input() as pipe:
+        pipe.send_text(keys)
+        return PromptSession(key_bindings=line_break_bindings(), input=pipe, output=DummyOutput()).prompt()
+
+
+class TestLineBreakBindings:
+    def test_shift_enter_from_vs_code_adds_a_line_break(self):
+        assert prompted("first line\\\r\nsecond line\r") == "first line\nsecond line"
+
+    def test_backslash_then_enter_adds_a_line_break(self):
+        assert prompted("first line\\\rsecond line\r") == "first line\nsecond line"
+
+    def test_enter_submits_the_prompt(self):
+        assert prompted("a line\rignored") == "a line"
