@@ -14,6 +14,8 @@ from sasoi.evals.cases import Case, load_cases
 from sasoi.evals.evaluator import Evaluator
 from sasoi.evals.grading import Grade
 from sasoi.evals.report import line, pass_rates, summary
+from sasoi.evals.usage import usage_in_trace_files
+from sasoi.pricing import PRICES, usage_summary
 from sasoi.settings import SettingError
 
 CASES_PATH = Path("evals/runs.toml")
@@ -37,6 +39,7 @@ def main() -> None:
     if args.repeat > 1:
         print(pass_rates(grades))
     print(summary(grades, run_dir))
+    print(usage_summary(config.model, usage_in_trace_files(run_dir), PRICES.get(config.model)))
     if not all(grade.passed for grade in grades):
         raise SystemExit(1)
 
