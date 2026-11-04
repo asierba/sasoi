@@ -4,6 +4,7 @@ from sasoi.cli import DIM, GREY, RED, RESET, YELLOW, repl
 from sasoi.pricing import Price
 
 A_USAGE = Usage(input_tokens=1, output_tokens=1)
+A_MODEL = "a-model"
 A_PROMPT = "a prompt"
 AN_ANSWER_TEXT = "an answer"
 
@@ -43,6 +44,7 @@ class TestRepl:
 
         repl(
             agent,
+            A_MODEL,
             read=typed("hello", "what did I say?"),
             write=written.append,
             write_markdown=written.append,
@@ -52,12 +54,13 @@ class TestRepl:
         [_, first_answer, _, _, _, second_answer, _, _] = written
         assert [first_answer, second_answer] == ["Hi!", "You said hello"]
 
-    def test_writes_tokens_and_cost_after_each_answer(self):
+    def test_writes_model_tokens_and_cost_after_each_answer(self):
         agent = FakeAgent(Answer("Hi!", Usage(input_tokens=1_200, output_tokens=300)))
         written: list[str] = []
 
         repl(
             agent,
+            "claude-a-model",
             Price(input_per_mtok=1.00, output_per_mtok=5.00),
             read=typed(A_PROMPT),
             write=written.append,
@@ -65,14 +68,15 @@ class TestRepl:
         )
 
         [_, answer, usage_line, _] = written
-        assert [answer, usage_line] == ["Hi!", f"{DIM}1,200 in · 300 out · $0.0027{RESET}"]
+        assert [answer, usage_line] == ["Hi!", f"{DIM}claude-a-model · 1,200 in · 300 out · $0.0027{RESET}"]
 
-    def test_writes_tokens_only_when_model_has_no_price(self):
+    def test_writes_model_and_tokens_only_when_model_has_no_price(self):
         agent = FakeAgent(Answer(AN_ANSWER_TEXT, Usage(input_tokens=1_200, output_tokens=300)))
         written: list[str] = []
 
         repl(
             agent,
+            "claude-a-model",
             None,
             read=typed(A_PROMPT),
             write=written.append,
@@ -80,13 +84,13 @@ class TestRepl:
         )
 
         [_, _, usage_line, _] = written
-        assert usage_line == f"{DIM}1,200 in · 300 out{RESET}"
+        assert usage_line == f"{DIM}claude-a-model · 1,200 in · 300 out{RESET}"
 
     def test_shows_working_in_grey_before_the_answer(self):
         agent = FakeAgent(an_answer("Hi!"))
         written: list[str] = []
 
-        repl(agent, read=typed(A_PROMPT), write=written.append, write_markdown=written.append)
+        repl(agent, A_MODEL, read=typed(A_PROMPT), write=written.append, write_markdown=written.append)
 
         [waiting, answer, _, _] = written
         assert [waiting, answer] == [f"{GREY}working…{RESET}", "Hi!"]
@@ -95,7 +99,7 @@ class TestRepl:
         agent = FakeAgent(an_answer(AN_ANSWER_TEXT))
         written: list[str] = []
 
-        repl(agent, read=typed(A_PROMPT), write=written.append, write_markdown=written.append)
+        repl(agent, A_MODEL, read=typed(A_PROMPT), write=written.append, write_markdown=written.append)
 
         [_, _, _, separator] = written
         assert separator == "---"
@@ -105,6 +109,7 @@ class TestRepl:
 
         repl(
             agent,
+            A_MODEL,
             read=typed("   ", ""),
             write=lambda text: None,
             write_markdown=lambda text: None,
@@ -118,6 +123,7 @@ class TestRepl:
 
         repl(
             agent,
+            A_MODEL,
             read=typed(A_PROMPT, A_PROMPT),
             write=written.append,
             write_markdown=written.append,
@@ -132,6 +138,7 @@ class TestRepl:
 
         repl(
             agent,
+            A_MODEL,
             read=typed(A_PROMPT, A_PROMPT),
             write=written.append,
             write_markdown=written.append,

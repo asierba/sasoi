@@ -47,7 +47,12 @@ def main() -> None:
         session = PromptSession(
             completer=WordCompleter(list(agent.commands), meta_dict=agent.commands, sentence=True), style=PROMPT_STYLE
         )
-        repl(agent, PRICES.get(config.model), read=lambda message: session.prompt([("class:prompt", message)]))
+        repl(
+            agent,
+            config.model,
+            PRICES.get(config.model),
+            read=lambda message: session.prompt([("class:prompt", message)]),
+        )
 
 
 def _config() -> Config:
@@ -62,10 +67,10 @@ def _trace_file() -> TextIO:
     return (TRACES_DIR / f"{datetime.now():%Y%m%d-%H%M%S}.jsonl").open("w")
 
 
-def usage_line(answer: Answer, price: Price | None) -> str:
+def usage_line(answer: Answer, model: str, price: Price | None) -> str:
     tokens = f"{answer.usage.input_tokens:,} in · {answer.usage.output_tokens:,} out"
     cost = f" · ${price.cost(answer.usage):.4f}" if price else ""
-    return f"{DIM}{tokens}{cost}{RESET}"
+    return f"{DIM}{model} · {tokens}{cost}{RESET}"
 
 
 def print_markdown(text: str) -> None:
@@ -74,6 +79,7 @@ def print_markdown(text: str) -> None:
 
 def repl(
     agent: ChatAgent,
+    model: str,
     price: Price | None = None,
     read: Callable[[str], str] = input,
     write: Callable[[str], None] = print,
@@ -97,5 +103,5 @@ def repl(
             write(f"{YELLOW}Interrupted{RESET}")
             continue
         write_markdown(answer.text)
-        write(usage_line(answer, price))
+        write(usage_line(answer, model, price))
         write_markdown("---")
