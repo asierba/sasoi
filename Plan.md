@@ -211,6 +211,8 @@ Phases 0 and 1 run on the laptop; by the end of phase 2 the same containers move
 
 **Goal:** feedback that knows what I was supposed to do.
 
+My current plan is already a `## Training plan` section of the athlete profile, as text in the prompt: exercises named as in Hevy, runs, and a short plan history. It is enough for chat and for feedback I read myself; this phase replaces it with structured data so code can compute adherence.
+
 **Build:**
 
 - Plan schema: weeks, sessions, targets
