@@ -109,9 +109,10 @@ Phases 0 and 1 run on the laptop; by the end of phase 2 the same containers move
 - [ ] Evals review: compare the eval setup with the [AI evals FAQ](https://hamel.dev/blog/posts/evals-faq/) and list the fixes
 - [ ] Hevy foundation: the same path for strength, on top of the Garmin one
   - [x] ~~Ingestion: all workouts pulled into Postgres~~
-  - [ ] Data tools: Hevy tables added to the schema description
+  - [ ] Data tools: Hevy tables added to the schema description and readable by `sasoi_reader`
   - [ ] Evals: strength and combined run-and-lift questions added to both datasets
   - [ ] `/feedback-strength` chat command: a saved prompt for feedback on my last strength session
+  - [ ] `/feedback-plan` chat command: a saved prompt that checks adherence, trends and goals since the plan started, and proposes an adjusted `## Training plan` section to paste into the athlete profile, with a reason for each change
 
 **Ships:** a chat CLI on my laptop that answers questions about my runs and lifts.
 
