@@ -98,7 +98,7 @@ Phases 0 and 1 run on the laptop; by the end of phase 2 the same containers move
   - [x] ~~Hevy: export workouts to CSV and check it has sets, reps, weight and dates~~
   - [x] ~~Hevy private web API: fetch every workout with the web app's bearer token (`scripts/hevy_spike.py`); all 72 workouts and 1363 sets match the CSV~~
   - [x] ~~Check whether Hevy workouts also reach Garmin Connect: no native sync, as Garmin refused Hevy API access; third-party sync (hevy2garmin) needs Hevy Pro, which would give direct API access anyway~~
-- [ ] Garmin foundation: the full path from ingestion to evals for runs first
+- [x] ~~Garmin foundation: the full path from ingestion to evals for runs first~~
   - [x] ~~Ingestion: latest runs with laps pulled into Postgres~~
   - [x] ~~Data tools: add a read-only `run_sql` tool and the schema description to the loop~~
   - [x] ~~First evals: 15–20 real questions about runs, each with a hand-written SQL query as ground truth; run the agent and read every trace~~
