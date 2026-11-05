@@ -23,18 +23,7 @@ Env: `.env` loaded by `cli.main`; `SASOI_MODEL` picks the chat model and `SASOI_
 
 ## Architecture
 
-- `cli.py`: `main` wires env, `httpx.Client` and an `Agent` into `repl`. `repl` only does terminal I/O; takes injectable `read`/`write` for tests.
-- `app.py`: `load_config` and `build_agent`, the wiring shared by the chat and eval CLIs.
-- `agent.py`: `Agent.ask` runs one turn: history, Claude call, tool-use loop.
-- `claude_client.py`: raw-HTTP call to the Messages API (no Anthropic SDK, by design). Errors raised as `ClaudeError`: `ClaudeConnectionError` or `ClaudeApiError`.
-- `conversation.py`: in-memory message history; `messages` returns a copy.
-- `pricing.py`: per-model `Price` turning a turn's `Usage` into dollars; unknown models show tokens only.
-- `settings.py`: `required` env lookup and `SettingError`; config loaders raise it, each `main` formats it for its output.
-- `retrying.py`: `RetryingClient` wraps the Claude client, retrying connection errors, 429 and 5xx with backoff.
-- `sync_cli.py`: `main` applies yoyo migrations (`migrations/*.sql`), then syncs Garmin and Hevy, logging to stdout at `SASOI_LOG_LEVEL` (third-party loggers capped at WARNING). Garmin login may prompt for email, password and MFA; Hevy login for a token pair.
-- `ingest/`: `sync.py` stores only runs not yet stored (latest `SASOI_GARMIN_LIMIT`), so backfill and incremental sync are the same code. `GarminSource` maps API payloads (`garmin_types.py`) to `Run`/`Lap` (`runs.py`) via `garmin_mapping.py`, an allow-list: fields not mapped are never stored. `PostgresRunStore` writes typed rows. `hevy_login` renews the Hevy token pair in `data/hevy/tokens.json` (prompting for one copied from the web app when missing); `HevySource` pages through every workout of Hevy's private web API and maps it to `Workout`/`Exercise`/`WorkoutSet` (`workouts.py`) via the `hevy_mapping.py` allow-list; `PostgresWorkoutStore` writes them; `sync_hevy` stores only workouts not yet stored.
-- `eval_cli.py` and `evals/`: runs each case in `evals/runs.toml` in parallel, each with a fresh agent, its own reader connection and its own trace in `traces/evals/<timestamp>/<repeat>/`. A case passes when one of the agent's `run_sql` results contains every row of the case's ground-truth query (columns in any order, numbers within rounding or a unit scale).
-- `tracing.py`: `TracedClient` and `TracedToolbox` wrap the Claude client and toolbox, writing every call to `traces/<timestamp>.jsonl` via `Tracer`.
+@docs/architecture.md
 
 ## Testing conventions
 

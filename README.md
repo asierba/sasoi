@@ -61,4 +61,4 @@ uv run pyright
 
 ## Architecture
 
-See [docs/architecture.excalidraw](docs/architecture.excalidraw) (open with [Excalidraw](https://excalidraw.com)).
+See [docs/architecture.md](docs/architecture.md).

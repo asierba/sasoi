@@ -105,7 +105,7 @@ Phases 0 and 1 run on the laptop; by the end of phase 2 the same containers move
   - [x] ~~`/feedback-run` chat command: a saved prompt for feedback on my last run~~
 - [x] ~~Athlete profile: a gitignored markdown file with my weekly session budget (runs and lifts combined), goals and constraints, loaded into the prompt so recommendations fit it~~
 - [x] ~~Fix the Hevy spike script (`scripts/hevy_spike.py`): `/login` needs a reCAPTCHA token, so the script renews a token pair copied once from the web app with `/auth/refresh_token`~~
-- [ ] Architecture docs: replace `docs/architecture.excalidraw` with a Mermaid diagram of the current code in the `AGENTS.md` architecture section, and cut its bullets to constraints and reasons the diagram cannot show
+- [x] ~~Architecture docs: replace `docs/architecture.excalidraw` with a Mermaid diagram of the current code in the `AGENTS.md` architecture section, and cut its bullets to constraints and reasons the diagram cannot show~~
 - [ ] Evals review: compare the eval setup with the [AI evals FAQ](https://hamel.dev/blog/posts/evals-faq/) and list the fixes
 - [ ] Hevy foundation: the same path for strength, on top of the Garmin one
   - [x] ~~Ingestion: all workouts pulled into Postgres~~
