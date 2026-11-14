@@ -21,7 +21,7 @@ A single-user, self-hosted training assistant. The most valuable feature is auto
 | Feature | What it does |
 | --- | --- |
 | Post-session feedback | After each run or strength session: summary, comparison with recent sessions, plan adherence, trend; sent by email |
-| Chat | Questions about sessions, trends and how to improve; CLI first, then a web chat right after run feedback |
+| Chat | Questions about sessions, trends and how to improve; CLI first, then a hosted web chat |
 | Discuss a session | A "Discuss this run" link in each feedback email opens a chat with that session already loaded |
 | Training plan | Uploaded or created with the agent (I approve); stored as structured data; adherence tracked |
 | Weekly summary | Sunday email with load, adherence and trends |
@@ -53,7 +53,7 @@ flowchart LR
     fit["FIT drop folder<br/>fallback"]
     claude["Claude Messages API"]
 
-    subgraph docker["Docker: laptop now, always-on host from phase 2"]
+    subgraph docker["Laptop now, always-on host from phase 1"]
         sync["Sync job<br/>poll every 15 min"]
         pg[("Postgres<br/>all data")]
         chat["Chat<br/>CLI, then web"]
@@ -74,7 +74,7 @@ flowchart LR
     agent <--> claude
 ```
 
-Phases 0 and 1 run on the laptop; by the end of phase 2 the same containers move to an always-on host (likely a cheap VPS) so feedback arrives without the laptop being on. From phase 1, the web chat stores conversations in the same Postgres database. Every model and tool call in the agent core is traced. Feedback is a fixed workflow so every email is consistent; chat is an agent loop because its questions are open-ended.
+Phase 0 runs on the laptop; in phase 1 the app moves to an always-on host so the web chat and the sync work without the laptop being on. From phase 1, the web chat stores conversations in the same Postgres database. Every model and tool call in the agent core is traced. Feedback is a fixed workflow so every email is consistent; chat is an agent loop because its questions are open-ended.
 
 ## Roadmap
 
@@ -106,21 +106,18 @@ Phases 0 and 1 run on the laptop; by the end of phase 2 the same containers move
 - [x] ~~Athlete profile: a gitignored markdown file with my weekly session budget (runs and lifts combined), goals and constraints, loaded into the prompt so recommendations fit it~~
 - [x] ~~Fix the Hevy spike script (`scripts/hevy_spike.py`): `/login` needs a reCAPTCHA token, so the script renews a token pair copied once from the web app with `/auth/refresh_token`~~
 - [x] ~~Architecture docs: replace `docs/architecture.excalidraw` with a Mermaid diagram of the current code in the `AGENTS.md` architecture section, and cut its bullets to constraints and reasons the diagram cannot show~~
-- [ ] Evals review: compare the eval setup with the [AI evals FAQ](https://hamel.dev/blog/posts/evals-faq/) and list the fixes
-- [ ] Hevy foundation: the same path for strength, on top of the Garmin one
+- [x] ~~Evals review: compare the eval setup with the [AI evals FAQ](https://hamel.dev/blog/posts/evals-faq/) and list the fixes (fixes in phase 4)~~
+- [ ] Hevy foundation: the same path for strength, on top of the Garmin one (the rest in phase 3)
   - [x] ~~Ingestion: all workouts pulled into Postgres~~
   - [ ] Data tools: Hevy tables added to the schema description and readable by `sasoi_reader`
-  - [ ] Evals: strength and combined run-and-lift questions added to both datasets
-  - [ ] `/feedback-strength` chat command: a saved prompt for feedback on my last strength session
-  - [ ] `/feedback-plan` chat command: a saved prompt that checks adherence, trends and goals since the plan started, and proposes an adjusted `## Training plan` section to paste into the athlete profile, with a reason for each change
 
 **Ships:** a chat CLI on my laptop that answers questions about my runs and lifts.
 
-**Done when:** data access is confirmed, and I have a baseline eval score and a list of failure categories.
+**Done when:** data access is confirmed, and I have a baseline eval score.
 
-### Phase 1 · Web chat
+### Phase 1 · Hosted web chat
 
-**Goal:** talk to the assistant from my phone.
+**Goal:** talk to the assistant from my phone, with my data synced automatically and no laptop.
 
 **Build:**
 
@@ -130,15 +127,21 @@ Phases 0 and 1 run on the laptop; by the end of phase 2 the same containers move
   - Trial mutation testing
   - Consider property testing
 - Streaming in the agent loop, used by both the CLI and the web chat
-- Minimal web app, local first: runs on the laptop; one chat page with streaming and a list of past conversations
+- Minimal web app: one chat page with streaming, the chat commands, and a list of past conversations
 - Frontend state machines with XState: try them for the chat UI states
 - Conversations stored in the same Postgres database
-- Access from the phone through Tailscale to the laptop, not exposed publicly
+- Always-on host for the app, the database and the scheduled sync: Vercel or a VPS, chosen in this phase (see open decisions)
+- Scheduled sync of Garmin and Hevy on the host
+- Garmin login without interaction (no MFA prompt) on the host, and Garmin and Hevy tokens stored where the host can read and renew them
+- Database passwords (owner and `sasoi_reader`) set from secrets on the host, not hardcoded in the compose file and migrations
+- Athlete profile in production: written on every deploy, with no SSH or manual step; never committed in plain text (see open decisions)
+- Access from the phone only for me: the site holds health data (see open decisions)
+- Traces readable on the host (see open decisions)
 - Eval cases for follow-up questions that start from a session
 
-**Ships:** a web chat on my laptop that I can open from my phone.
+**Ships:** a hosted web chat that I open from my phone, on data that syncs by itself.
 
-**Done when:** after a run, I sync and then ask follow-up questions about that run from my phone.
+**Done when:** after a run, I open the web chat on my phone and ask about that run, with no laptop and no manual sync.
 
 ### Phase 2 · Run feedback
 
@@ -146,19 +149,14 @@ Phases 0 and 1 run on the laptop; by the end of phase 2 the same containers move
 
 **Build:**
 
-- Sync job polling Garmin Connect, plus a processed-sessions table so nothing is sent twice
+- Processed-sessions table so nothing is sent twice
 - Jitter in Claude retry backoff, now that the feedback job and the chat can retry at the same time
 - Feedback workflow: context pack, write, validate the numbers, send; starts from the `/feedback-run` prompt (`/feedback-strength` for strength in phase 3)
 - Feedback evals: numbers checked by code, usefulness and tone scored by an LLM judge
   - Run: the `/feedback-run` prompt is the first case
   - Strength: the `/feedback-strength` prompt is the first case, in phase 3
   - Recommendations that exceed the athlete profile's weekly session budget fail
-- Dockerfile and a compose service for the app, then move to the always-on host, with images built for both amd64 and arm64 so the app runs on an x86 or ARM VPS and later on a Raspberry Pi
-- Garmin login without interaction (no MFA prompt) on the host
-- Database passwords (owner and `sasoi_reader`) set from secrets on the host, not hardcoded in the compose file and migrations
-- Athlete profile in production: CI writes `data/athlete_profile.md` on every deploy, with no SSH or manual step; never committed in plain text (see open decisions)
 - A "Discuss this run" link in each feedback email that opens a new conversation loaded with that session's context pack
-- Tracing tool with a browser UI, replacing the JSONL traces (see open decisions)
 
 **Ships:** feedback in my inbox after every run, with a link to discuss it in the web chat.
 
@@ -170,6 +168,9 @@ Phases 0 and 1 run on the laptop; by the end of phase 2 the same containers move
 
 **Build:**
 
+- Hevy evals: strength and combined run-and-lift questions added to both datasets
+- `/feedback-strength` chat command: a saved prompt for feedback on my last strength session
+- `/feedback-plan` chat command: a saved prompt that checks adherence, trends and goals since the plan started, and proposes an adjusted `## Training plan` section to paste into the athlete profile, with a reason for each change
 - Strength context pack: volume, top sets, estimated 1RM, comparison with recent sessions
 - Input: the Hevy private API with a renewed token pair, or the Pro API if it is worth paying for
 - Strength cases added to the feedback evals
@@ -185,6 +186,14 @@ Phases 0 and 1 run on the laptop; by the end of phase 2 the same containers move
 **Build:**
 
 - Eval set grown to about 50 cases, error analysis on traces
+- Fixes from the evals review against the [AI evals FAQ](https://hamel.dev/blog/posts/evals-faq/):
+  - Error analysis: note the first failure in 30 or more traces, group the notes into failure categories and count them; notes gitignored
+  - Validate the code grader against my own grades, then tighten it (±0.5 on small counts, text prefix match, seven unit scales)
+  - `favourite-weekday` ground truth returns the day, not only the count
+  - Out-of-scope and unanswerable cases: an injury question, a metric not stored, a period with no data
+  - Code check that every number in the answer is in a tool result
+  - `run_sql` errors and tool calls per case in the report
+  - Pre-commit blocks on known regressions or a per-case pass rate, not on any single failure
 - LLM judge on the chat answers, trusted only once it agrees with a sample of answers I grade by hand
   - Improve on code grading, which checks only the agent's `run_sql` results: catch dropped rows or made-up claims in the answer, wrong extra values (0 where there is no data), and results labelled as text instead of dates or years
   - Keep code grading on the `run_sql` results; revisit the eval architecture (case format, runner, reporting) to carry both graders
@@ -290,9 +299,9 @@ Going deeper, such as training models from scratch, is a separate decision for l
 | --- | --- | --- | --- |
 | Garmin data access | Risk | Ongoing | Unofficial Garmin Connect API confirmed in the spike, but login hit a Cloudflare block and rate limiting before MFA got through; Garmin may break it at any time; fallbacks: Intervals.icu or FIT export from Garmin Connect, then screenshots read by a vision model |
 | Hevy data access | Risk | Ongoing | Private web API confirmed in the spike; `/auth/refresh_token` renews the token pair, even after the 15-minute access token expires, but the refresh token's lifetime is unknown and the session dies on logout; Hevy may block it at any time; fallbacks: Pro API, CSV export, then screenshots |
-| Always-on host | Decision | End of phase 2 | Needed for triggers and the web chat; leaning to a cheap VPS (no spare machine at home); compare providers when deciding, as prices moved a lot in 2026. Later, if the project proves its value, move to a Raspberry Pi or similar cheap home machine |
-| Tracing tool | Decision | End of phase 2 | Depends on the always-on host: self-hosted on it (e.g. Phoenix, Langfuse) vs SaaS; traces contain health data. JSONL files plus `scripts/trace.sh` until then; OpenTelemetry keeps the backend swappable |
-| Athlete profile in production | Decision | End of phase 2 | Personal data that sync cannot rebuild, so it needs a source of truth outside the host that CI can deploy from. CI secret (one `gh secret set` per change, but cannot be read back) vs encrypted in the repo with sops and age (versioned, more tooling). Not plain in the repo or a seed migration: no personal data in the codebase |
+| Always-on host | Decision | Phase 1 | Needed for the web chat, the scheduled sync and triggers. Vercel with a managed Postgres (e.g. Neon): simple to deploy, but a third party holds the health data, Hobby cron runs at most once a day, functions have a time limit and no writable disk for tokens and traces. A cheap VPS (no spare machine at home): runs the current compose services, plus Tailscale for private access; compare providers when deciding, as prices moved a lot in 2026. Later, if the project proves its value, move to a Raspberry Pi or similar cheap home machine |
+| Tracing tool | Decision | Phase 1 | Depends on the always-on host: self-hosted on it (e.g. Phoenix, Langfuse) vs SaaS; traces contain health data. JSONL files plus `scripts/trace.sh` until then; OpenTelemetry keeps the backend swappable |
+| Athlete profile in production | Decision | Phase 1 | Personal data that sync cannot rebuild, so it needs a source of truth outside the host that CI can deploy from. CI secret (one `gh secret set` per change, but cannot be read back) vs encrypted in the repo with sops and age (versioned, more tooling). Not plain in the repo or a seed migration: no personal data in the codebase |
 | Hevy access route | Decision | End of phase 3 | Private API (if the refresh token keeps working) vs Hevy Pro at $2.99/month; keep Pro only if it earns it |
 | Jev spike | Decision | End of phase 7 | Discriminative model vs an LLM; candidate use: classifying run type for plan matching |
 | Local models | Decision | End of phase 9 | Which steps can run on Ollama |
