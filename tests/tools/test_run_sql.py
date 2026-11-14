@@ -48,6 +48,16 @@ class TestRunSql:
         with pytest.raises(ToolError, match="permission denied for table _yoyo_migration"):
             run_sql(conn, A_SCHEMA).run({"query": "SELECT * FROM _yoyo_migration"})
 
+    def test_reads_hevy_tables(self, conn):
+        result = run_sql(conn, A_SCHEMA).run(
+            {
+                "query": "SELECT w.workout_id, e.title, s.reps FROM hevy_workouts w "
+                "JOIN hevy_exercises e USING (workout_id) JOIN hevy_sets s USING (workout_id, exercise_index) LIMIT 0"
+            }
+        )
+
+        assert result == "workout_id,title,reps\n(0 rows)"
+
     def test_keeps_working_after_a_failed_query(self, conn):
         tool = run_sql(conn, A_SCHEMA)
         with pytest.raises(ToolError):

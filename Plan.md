@@ -107,9 +107,9 @@ Phase 0 runs on the laptop; in phase 1 the app moves to an always-on host so the
 - [x] ~~Fix the Hevy spike script (`scripts/hevy_spike.py`): `/login` needs a reCAPTCHA token, so the script renews a token pair copied once from the web app with `/auth/refresh_token`~~
 - [x] ~~Architecture docs: replace `docs/architecture.excalidraw` with a Mermaid diagram of the current code in the `AGENTS.md` architecture section, and cut its bullets to constraints and reasons the diagram cannot show~~
 - [x] ~~Evals review: compare the eval setup with the [AI evals FAQ](https://hamel.dev/blog/posts/evals-faq/) and list the fixes (fixes in phase 4)~~
-- [ ] Hevy foundation: the same path for strength, on top of the Garmin one (the rest in phase 3)
+- [x] ~~Hevy foundation: the same path for strength, on top of the Garmin one (the rest in phase 3)~~
   - [x] ~~Ingestion: all workouts pulled into Postgres~~
-  - [ ] Data tools: Hevy tables added to the schema description and readable by `sasoi_reader`
+  - [x] ~~Data tools: Hevy tables added to the schema description and readable by `sasoi_reader`~~
 
 **Ships:** a chat CLI on my laptop that answers questions about my runs and lifts.
 
